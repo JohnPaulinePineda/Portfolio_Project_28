@@ -1,0 +1,663 @@
+---
+title: "R: Exploring Robust Logistic Regression Models for Handling Quasi-Complete Separation"
+author: "John Pauline Pineda"
+date: "February 19, 2023"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: readable
+    highlight: tango
+    css: doc.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
+```
+# **1. Table of Contents**
+|
+| This document presents a non-exhaustive list of robust model variants applied to handle quasi-complete or complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>.    
+|
+##  1.1 Sample Data
+|
+| The <mark style="background-color: #EEEEEE;color: #FF0000">**sex2**</mark>  dataset from the  <mark style="background-color: #CCECFF">**logistf**</mark> package was used for this illustrated example. One of the original categorical predictors was transformed to better simulate a quasi-complete condition when a covariate almost perfectly predicts the outcome.
+|
+| Preliminary dataset assessment:
+|
+| **[A]** 239 rows (observations)
+|      **[A.1]** Train Set = 239 observations
+| 
+| **[B]** 7 columns (variables)
+|      **[B.1]** 1/7 response = <span style="color: #FF0000">UTI</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">UTI=No</span> < <span style="color: #FF0000">UTI=Yes</span>
+|      **[B.2]** 6/7 predictors = All remaining variables (6/6 factor)
+|     
+| 
+```{r section_1.1, warning=FALSE, message=FALSE}
+##################################
+# Loading R libraries
+##################################
+library(AppliedPredictiveModeling)
+library(caret)
+library(rpart)
+library(lattice)
+library(dplyr)
+library(tidyr)
+library(moments)
+library(skimr)
+library(RANN)
+library(pls)
+library(corrplot)
+library(tidyverse)
+library(lares)
+library(DMwR)
+library(gridExtra)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(stats)
+library(nnet)
+library(elasticnet)
+library(earth)
+library(party)
+library(kernlab)
+library(randomForest)
+library(Cubist)
+library(pROC)
+library(mda)
+library(klaR)
+library(pamr)
+library(OptimalCutpoints)
+library(broom)
+library(PRROC)
+library(logistf)
+library(arm)
+library(glmnet)
+
+##################################
+# Loading source and
+# formulating the train set
+##################################
+data(sex2)
+sex2$dia <- sex2$case
+sex2$dia[1] <- 0
+UTI_Train <- as.data.frame(sex2)
+
+##################################
+# Applying verbose descriptions
+# for the response and predictor variables
+##################################
+colnames(UTI_Train) <- c("UTI",
+                         "Age_24",
+                         "Contraceptive",
+                         "Condom",
+                         "LubricatedCondom",
+                         "Spermicide",
+                         "Diaphragm")
+
+UTI <- UTI_Train
+
+UTI_Train <- lapply(UTI_Train, function(x) ifelse(x==1,"Yes","No"))
+UTI_Train <- lapply(UTI_Train, function(x) as.factor(as.character(x)))
+UTI_Train <- as.data.frame(UTI_Train)
+
+##################################
+# Performing a general exploration of the train set
+##################################
+dim(UTI_Train)
+str(UTI_Train)
+summary(UTI_Train)
+
+##################################
+# Formulating a data type assessment summary
+##################################
+PDA <- UTI_Train
+(PDA.Summary <- data.frame(
+  Column.Index=c(1:length(names(PDA))),
+  Column.Name= names(PDA),
+  Column.Type=sapply(PDA, function(x) class(x)),
+  row.names=NULL)
+)
+```
+
+##  1.2 Data Quality Assessment
+|
+| Data quality assessment:
+|
+| **[A]** No missing observations noted for any variable.
+|
+| **[B]** Low variance observed for 2 variables with First.Second.Mode.Ratio>5.
+|      **[B.1]** <span style="color: #FF0000">Age_24</span> variable (factor)
+|
+| **[C]** Due to the absence of numeric predictors, no low variance with Unique.Count.Ratio<0.01 and high skewness with Skewness>3 or Skewness<(-3) observed for any variable.
+|
+|
+```{r section_1.2, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DQA <- UTI_Train
+
+##################################
+# Formulating an overall data quality assessment summary
+##################################
+(DQA.Summary <- data.frame(
+  Column.Index=c(1:length(names(DQA))),
+  Column.Name= names(DQA),
+  Column.Type=sapply(DQA, function(x) class(x)),
+  Row.Count=sapply(DQA, function(x) nrow(DQA)),
+  NA.Count=sapply(DQA,function(x)sum(is.na(x))),
+  Fill.Rate=sapply(DQA,function(x)format(round((sum(!is.na(x))/nrow(DQA)),3),nsmall=3)),
+  row.names=NULL)
+)
+
+##################################
+# Listing all predictors
+##################################
+DQA.Predictors <- DQA[,!names(DQA) %in% c("UTI")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DQA.Predictors.Numeric <- DQA.Predictors[,sapply(DQA.Predictors, is.numeric)]
+
+if (length(names(DQA.Predictors.Numeric))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Numeric))),
+               " numeric predictor variable(s)."))
+} else {
+  print("There are no numeric predictor variables.")
+}
+
+##################################
+# Listing all factor predictors
+##################################
+DQA.Predictors.Factor <- DQA.Predictors[,sapply(DQA.Predictors, is.factor)]
+
+if (length(names(DQA.Predictors.Factor))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Factor))),
+               " factor predictor variable(s)."))
+} else {
+  print("There are no factor predictor variables.")
+}
+
+##################################
+# Formulating a data quality assessment summary for factor predictors
+##################################
+if (length(names(DQA.Predictors.Factor))>0) {
+
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = x[!(x %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return("x"),
+           return(usm[tabsm == max(tabsm)]))
+  }
+
+  (DQA.Predictors.Factor.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Factor),
+  Column.Type=sapply(DQA.Predictors.Factor, function(x) class(x)),
+  Unique.Count=sapply(DQA.Predictors.Factor, function(x) length(unique(x))),
+  First.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(FirstModes(x)[1])),
+  Second.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(SecondModes(x)[1])),
+  First.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Factor)),3), nsmall=3)),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  row.names=NULL)
+  )
+
+}
+
+##################################
+# Formulating a data quality assessment summary for numeric predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))>0) {
+
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = na.omit(x)[!(na.omit(x) %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return(0.00001),
+           return(usm[tabsm == max(tabsm)]))
+  }
+
+  (DQA.Predictors.Numeric.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Numeric),
+  Column.Type=sapply(DQA.Predictors.Numeric, function(x) class(x)),
+  Unique.Count=sapply(DQA.Predictors.Numeric, function(x) length(unique(x))),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Numeric)),3), nsmall=3)),
+  First.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((FirstModes(x)[1]),3),nsmall=3)),
+  Second.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((SecondModes(x)[1]),3),nsmall=3)),
+  First.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  Minimum=sapply(DQA.Predictors.Numeric, function(x) format(round(min(x,na.rm = TRUE),3), nsmall=3)),
+  Mean=sapply(DQA.Predictors.Numeric, function(x) format(round(mean(x,na.rm = TRUE),3), nsmall=3)),
+  Median=sapply(DQA.Predictors.Numeric, function(x) format(round(median(x,na.rm = TRUE),3), nsmall=3)),
+  Maximum=sapply(DQA.Predictors.Numeric, function(x) format(round(max(x,na.rm = TRUE),3), nsmall=3)),
+  Skewness=sapply(DQA.Predictors.Numeric, function(x) format(round(skewness(x,na.rm = TRUE),3), nsmall=3)),
+  Kurtosis=sapply(DQA.Predictors.Numeric, function(x) format(round(kurtosis(x,na.rm = TRUE),3), nsmall=3)),
+  Percentile25th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.25,na.rm = TRUE),3), nsmall=3)),
+  Percentile75th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.75,na.rm = TRUE),3), nsmall=3)),
+  row.names=NULL)
+  )
+
+}
+
+##################################
+# Identifying potential data quality issues
+##################################
+
+##################################
+# Checking for missing observations
+##################################
+if ((nrow(DQA.Summary[DQA.Summary$NA.Count>0,]))>0){
+  print(paste0("Missing observations noted for ",
+               (nrow(DQA.Summary[DQA.Summary$NA.Count>0,])),
+               " variable(s) with NA.Count>0 and Fill.Rate<1.0."))
+  DQA.Summary[DQA.Summary$NA.Count>0,]
+} else {
+  print("No missing observations noted.")
+}
+
+##################################
+# Checking for zero or near-zero variance predictors
+##################################
+if (length(names(DQA.Predictors.Factor))==0) {
+  print("No factor predictors noted.")
+} else if (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])),
+               " factor variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance factor predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])),
+               " numeric variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance numeric predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])),
+               " numeric variable(s) with Unique.Count.Ratio<0.01."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,]
+} else {
+  print("No low variance numeric predictors due to low unique count ratio noted.")
+}
+
+##################################
+# Checking for skewed predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])>0){
+  print(paste0("High skewness observed for ",
+  (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])),
+  " numeric variable(s) with Skewness>3 or Skewness<(-3)."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                 as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),]
+} else {
+  print("No skewed numeric predictors noted.")
+}
+
+```
+
+##  1.3 Data Preprocessing
+
+###  1.3.1 Pre-Processed Dataset
+|
+| Preliminary dataset assessment:
+|
+| **[A]** 239 rows (observations)
+|      **[A.1]** Train Set = 239 observations
+| 
+| **[B]** 7 columns (variables)
+|      **[B.1]** 1/7 response = <span style="color: #FF0000">UTI</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">UTI=No</span> < <span style="color: #FF0000">UTI=Yes</span>
+|      **[B.2]** 6/7 predictors = All remaining variables (6/6 factor)
+| 
+| **[C]** Pre-processing actions applied:
+|      **[C.1]** Due to the objective of simulating a a quasi-complete separation, the predictors observed with near-zero variance were not removed in the analysis 
+|
+```{r section_1.3.1, warning=FALSE, message=FALSE}
+##################################
+# Creating the pre-modelling
+# train set
+##################################
+PMA_PreModelling_Train <- UTI_Train
+
+##################################
+# Gathering descriptive statistics
+##################################
+(PMA_PreModelling_Train_Skimmed <- skim(PMA_PreModelling_Train))
+
+###################################
+# Verifying the data dimensions
+# for the train set
+###################################
+dim(PMA_PreModelling_Train)
+
+```
+
+## 1.4 Data Exploration
+|
+| Exploratory data analysis:
+|
+| **[A]** Several factor variables demonstrated differential relationships with the <span style="color: #FF0000">UTI</span> response variable:
+|      **[A.1]** <span style="color: #FF0000">Diaphragm</span> variable (factor)
+|      **[A.2]** <span style="color: #FF0000">Age_24</span> variable (factor)
+|      **[A.3]** <span style="color: #FF0000">Spermicide</span> variable (factor)
+|      **[A.4]** <span style="color: #FF0000">LubricatedCondom</span> variable (factor)
+|
+```{r section_1.4, warning=FALSE, message=FALSE}
+##################################
+# Restructuring the dataset for
+# for barchart analysis
+##################################
+EDA.Bar.Source <- PMA_PreModelling_Train
+
+##################################
+# Creating a function to formulate
+# the proportions table
+##################################
+EDA.PropTable.Function <- function(FactorVar) {
+  EDA.Bar.Source.FactorVar <- EDA.Bar.Source[,c("UTI",
+                                                FactorVar)]
+  EDA.Bar.Source.FactorVar.Prop <- as.data.frame(prop.table(table(EDA.Bar.Source.FactorVar), 2))
+  names(EDA.Bar.Source.FactorVar.Prop)[2] <- "UTI"
+  EDA.Bar.Source.FactorVar.Prop$Variable <- rep(FactorVar,nrow(EDA.Bar.Source.FactorVar.Prop))
+
+  return(EDA.Bar.Source.FactorVar.Prop)
+
+}
+
+EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
+                                       EDA.PropTable.Function("Contraceptive"),
+                                       EDA.PropTable.Function("Condom"),
+                                       EDA.PropTable.Function("LubricatedCondom"),
+                                       EDA.PropTable.Function("Spermicide"),
+                                       EDA.PropTable.Function("Diaphragm"))
+
+(EDA.Barchart.FactorVar <- barchart(EDA.Bar.Source.FactorVar.Prop[,3] ~
+                                      EDA.Bar.Source.FactorVar.Prop[,2] | EDA.Bar.Source.FactorVar.Prop[,4],
+                                      data=EDA.Bar.Source.FactorVar.Prop,
+                                      groups = EDA.Bar.Source.FactorVar.Prop[,1],
+                                      stack=TRUE,
+                                      ylab = "Proportion",
+                                      xlab = "UTI",
+                                      auto.key = list(adj = 1),
+                                      layout=(c(3,2))))
+
+```
+
+## 1.5 Predictive Model Index Development and Probability Curve Estimation
+
+###  1.5.1 Logistic Regression (LR)
+|
+| **[A]** The logistic regression model from both the <mark style="background-color: #CCECFF">**stats**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000"LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor resulted in the inflation of its estimated coefficient.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -2.868 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.052
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -21.885
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -22.120 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.687
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +2.868
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +71.283
+|
+| **[B]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a non-logistic profile with predicted points clustered in groups.
+|
+| **[C]** The performance of the model is summarized as follows:
+|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.2]** Apparent ROC Curve AUC = 0.99996
+|      **[C.3]** Cross-Validated ROC Curve AUC = 0.91229
+|
+```{r section_1.5.1, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_LR <- UTI
+
+##################################
+# Formulating the Logistic Regression model
+##################################
+LR_Model <- glm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+              data = PMA_PreModelling_Train_LR,
+              family = binomial)
+
+##################################
+# Consolidating the model results
+##################################
+summary(LR_Model)
+
+##################################
+# Computing the model predictions
+##################################
+(LR_Model_Probabilities <- predict(LR_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(LR_Model_Indices <- predict(LR_Model, 
+                           type = c("link")))
+max(LR_Model_Indices)
+min(LR_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+LR_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_LR)
+LR_Model_Predictions$LR_Prob <- LR_Model_Probabilities
+LR_Model_Predictions$LR_LP <- LR_Model_Indices
+LR_Model_Predictions$UTI <- as.factor(LR_Model_Predictions$UTI)
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+LR_Model_Predictions %>%
+  ggplot(aes(x = LR_LP ,
+             y = LR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Logistic Regression") +
+  theme_light() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+LR_Prob_Low  <- LR_Model_Predictions[LR_Model_Predictions$UTI==0,
+                                    c("LR_Prob")]
+LR_Prob_High <- LR_Model_Predictions[LR_Model_Predictions$UTI==1,
+                                    c("LR_Prob")]
+LR_Model_Prob_ROC <- roc.curve(scores.class1 = LR_Prob_Low,
+                               scores.class0 = LR_Prob_High,
+                                curve = TRUE)
+
+plot(LR_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Logistic Regression", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+###  1.5.2 Firth's Bias-Reduced Logistic Regression (FBRLR)
+
+```{r section_1.5.2, warning=FALSE, message=FALSE}
+
+```
+
+###  1.5.3 Firth's Logistic Regression With Added Covariate (FLAC)
+
+```{r section_1.5.3, warning=FALSE, message=FALSE}
+
+```
+
+###  1.5.4 Firth's Logistic Regression With Intercept Correction (FLIC)
+
+```{r section_1.5.4, warning=FALSE, message=FALSE}
+
+```
+
+###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLMCP)
+
+```{r section_1.5.5, warning=FALSE, message=FALSE}
+
+```
+
+###  1.5.6 Ridge Regression (RR)
+
+```{r section_1.5.6, warning=FALSE, message=FALSE}
+
+```
+
+
+##  1.6 Probability Curve and Coefficient Estimation Evaluation Summary
+|
+| Model estimation comparison:
+|
+```{r section_1.6, warning=FALSE, message=FALSE}
+
+```
+
+# **2. References**
+|
+| **[Book]** [Applied Predictive Modeling](http://appliedpredictivemodeling.com/) by Max Kuhn and Kjell Johnson
+| **[Book]** [An Introduction to Statistical Learning](https://www.statlearning.com/) by Gareth James, Daniela Witten, Trevor Hastie and Rob Tibshirani
+| **[Book]** [Multivariate Data Visualization with R](http://lmdvr.r-forge.r-project.org/figures/figures.html) by Deepayan Sarkar
+| **[Book]** [Machine Learning](https://bookdown.org/ssjackson300/Machine-Learning-Lecture-Notes/) by Samuel Jackson
+| **[Book]** [Data Modeling Methods](https://bookdown.org/larget_jacob/data-modeling-methods/) by Jacob Larget
+| **[Book]** [Introduction to R and Statistics](https://saestatsteaching.tech/) by University of Western Australia
+| **[Book]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
+| **[Book]** [Introduction to Research Methods](https://bookdown.org/ejvanholm/Textbook/) by Eric van Holm
+| **[R Package]** [AppliedPredictiveModeling](https://cran.r-project.org/web//packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf) by Max Kuhn
+| **[R Package]** [caret](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[R Package]** [rpart](https://mran.microsoft.com/web/packages/rpart/rpart.pdf) by Terry Therneau and Beth Atkinson
+| **[R Package]** [lattice](https://cran.r-project.org/web/packages/lattice/lattice.pdf) by  Deepayan Sarkar
+| **[R Package]** [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html/) by Hadley Wickham
+| **[R Package]** [moments](https://cran.r-project.org/web/packages/moments/index.html) by Lukasz Komsta and Frederick
+| **[R Package]** [skimr](https://cran.r-project.org/web/packages/skimr/skimr.pdf) by  Elin Waring
+| **[R Package]** [RANN](https://cran.r-project.org/web/packages/RANN/RANN.pdf) by  Sunil Arya, David Mount, Samuel Kemp and Gregory Jefferis
+| **[R Package]** [corrplot](https://cran.r-project.org/web/packages/corrplot/corrplot.pdf) by Taiyun Wei
+| **[R Package]** [tidyverse](https://cran.r-project.org/web/packages/tidyverse/tidyverse.pdf) by Hadley Wickham
+| **[R Package]** [lares](https://cran.rstudio.com/web/packages/lares/lares.pdf) by Bernardo Lares
+| **[R Package]** [DMwR](https://mran.microsoft.com/snapshot/2016-05-02/web/packages/DMwR/DMwR.pdf) by Luis Torgo
+| **[R Package]** [gridExtra](https://cran.r-project.org/web/packages/gridExtra/gridExtra.pdf) by Baptiste Auguie and Anton Antonov
+| **[R Package]** [rattle](https://cran.r-project.org/web/packages/rattle/rattle.pdf) by Graham Williams
+| **[R Package]** [rpart.plot](https://cran.r-project.org/web/packages/rpart.plot/rpart.plot.pdf) by Stephen Milborrow
+| **[R Package]** [RColorBrewer](https://cran.r-project.org/web//packages/RColorBrewer/RColorBrewer.pdf) by Erich Neuwirth
+| **[R Package]** [stats](https://search.r-project.org/R/refmans/stats/html/00Index.html) by R Core Team
+| **[R Package]** [pls](https://cran.r-project.org/web/packages/pls/pls.pdf) by Kristian Hovde Liland
+| **[R Package]** [nnet](https://cran.r-project.org/web/packages/nnet/nnet.pdf) by Brian Ripley
+| **[R Package]** [elasticnet](https://cran.r-project.org/web/packages/elasticnet/elasticnet.pdf) by Hui Zou
+| **[R Package]** [earth](https://cran.r-project.org/web/packages/earth/earth.pdf) by Stephen Milborrow
+| **[R Package]** [party](https://cran.r-project.org/web/packages/party/party.pdf) by Torsten Hothorn
+| **[R Package]** [kernlab](https://cran.r-project.org/web/packages/kernlab/kernlab.pdf) by Alexandros Karatzoglou
+| **[R Package]** [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf) by Andy Liaw
+| **[R Package]** [pROC](https://cran.r-project.org/web/packages/pROC/pROC.pdf) by Xavier Robin
+| **[R Package]** [mda](https://cran.r-project.org/web/packages/mda/mda.pdf) by Trevor Hastie
+| **[R Package]** [klaR](https://cran.r-project.org/web/packages/klaR/klaR.pdf) by Christian Roever, Nils Raabe, Karsten Luebke, Uwe Ligges, Gero Szepannek, Marc Zentgraf and David Meyer
+| **[R Package]** [pamr](https://cran.r-project.org/web/packages/pamr/pamr.pdf) by Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan and Gil Chu
+| **[R Package]** [OptimalCutpoints](https://cran.r-project.org/web/packages/OptimalCutpoints/OptimalCutpoints.pdf) by Monica Lopez-Raton and Maria Xose Rodriguez-Alvarez
+| **[R Package]** [broom](https://cran.r-project.org/web/packages/broom/broom.pdf) by Simon Couch
+| **[R Package]** [PRROC](https://cran.r-project.org/web/packages/PRROC/PRROC.pdf) by Jan Grau and Jens Keilwagen
+| **[R Package]** [logistf](https://cran.r-project.org/web/packages/logistf/logistf.pdf) by Georg Heinze
+| **[R Package]** [arm](https://cran.r-project.org/web/packages/arm/arm.pdf) by Yu-Sung Su
+| **[R Package]** [glmnet](https://cran.r-project.org/web/packages/glmnet/glmnet.pdf) by Trevor Hastie
+| **[Article]** [The caret Package](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[Article]** [A Short Introduction to the caret Package](https://cran.r-project.org/web/packages/caret/vignettes/caret.html) by Max Kuhn
+| **[Article]** [Caret Package – A Practical Guide to Machine Learning in R](https://www.machinelearningplus.com/machine-learning/caret-package/#:~:text=Caret%20is%20short%20for%20Classification%20And%20REgression%20Training.,track%20of%20which%20algorithm%20resides%20in%20which%20package.) by Selva Prabhakaran
+| **[Article]** [Tuning Machine Learning Models Using the Caret R Package](https://machinelearningmastery.com/tuning-machine-learning-models-using-the-caret-r-package/) by Jason Brownlee
+| **[Article]** [Lattice Graphs](http://www.sthda.com/english/wiki/lattice-graphs) by Alboukadel Kassambara
+
+| **[Article]** [What is Complete or Quasi-Complete Separation in Logistic/Probit Regression and How Do We Deal with Them](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faqwhat-is-complete-or-quasi-complete-separation-in-logisticprobit-regression-and-how-do-we-deal-with-them/) by UCLA Advanced Research Computing Group
+| **[Article]** [What Is Complete Separation in Binary Logistic Regression?](https://blog.minitab.com/en/starting-out-with-statistical-software/what-is-complete-separation-in-binary-logistic-regression) by Eric Heckman 
+| **[Article]** [xxx](xxx) by xxx 
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [xxx](xxx) by xxx
+| **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
+| **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
+|
+|
+|
+|
