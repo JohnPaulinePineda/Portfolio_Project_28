@@ -555,7 +555,8 @@ plot(LR_Model_Prob_ROC,
 |
 | **[A]** The Firth's bias-reduced logistic regression model from both the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
-| **[B]** The model does not contain any hyperparameter.
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">degree</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
 |
 | **[C]** The quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor resulted in the inflation of its estimated coefficients and standard errors.
 |      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -2.868 
