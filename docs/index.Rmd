@@ -457,7 +457,7 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
 | **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a non-logistic profile with predicted points clustered in groups.
 |
 | **[E]** The performance of the model is summarized as follows:
-|      **[E.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[E.1]** Final model configuration is fixed due to the absence of a hyperparameter.
 |      **[E.2]** Apparent ROC Curve AUC = 0.99996
 |      **[E.3]** Estimated probabilities were practically dichotomized into a limited set of values. 
 |
@@ -570,9 +570,9 @@ plot(LR_Model_Prob_ROC,
 | **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
 |
 | **[E]** The performance of the model is summarized as follows:
-|      **[E.1]** Final model configuration involves maxit=1000
+|      **[E.1]** Final model configuration involves maxit=1000.
 |      **[E.2]** Apparent ROC Curve AUC = 0.99996
-|      **[E.3]** Estimated probabilities were reasonably distributed across a set of values. 
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values. 
 |
 ```{r section_1.5.2, warning=FALSE, message=FALSE}
 ##################################
@@ -683,9 +683,9 @@ plot(FBRLR_Model_Prob_ROC,
 | **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
 |
 | **[E]** The performance of the model is summarized as follows:
-|      **[E.1]** Final model configuration involves maxit=1000
+|      **[E.1]** Final model configuration involves maxit=1000.
 |      **[E.2]** Apparent ROC Curve AUC = 0.99996
-|      **[E.3]** Estimated probabilities were reasonably distributed across a set of values. 
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values. 
 |
 ```{r section_1.5.3, warning=FALSE, message=FALSE}
 ##################################
@@ -796,9 +796,9 @@ plot(FLAC_Model_Prob_ROC,
 | **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
 |
 | **[E]** The performance of the model is summarized as follows:
-|      **[E.1]** Final model configuration involves maxit=1000
+|      **[E.1]** Final model configuration involves maxit=1000.
 |      **[E.2]** Apparent ROC Curve AUC = 0.99996
-|      **[E.3]** Estimated probabilities were reasonably distributed across a set of values. 
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values. 
 |
 ```{r section_1.5.4, warning=FALSE, message=FALSE}
 ##################################
@@ -890,9 +890,115 @@ plot(FLIC_Model_Prob_ROC,
 
 ```
 
-###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLMCP)
-
+###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLM_CP)
+|
+| **[A]** The Bayesian generalized linear model with Cauchy priors model from the <mark style="background-color: #CCECFF">**arm**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.051 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -0.489
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.935
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -1.510 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.306
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +1.540
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +12.604
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration is fixed due to the absence of a hyperparameter.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values. 
+|
 ```{r section_1.5.5, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_BGLM_CP <- UTI
+
+##################################
+# Formulating the Logistic Regression model
+##################################
+BGLM_CP_Model <- bayesglm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_BGLM_CP,
+                       family=binomial(link="logit"))
+
+##################################
+# Consolidating the model results
+##################################
+summary(BGLM_CP_Model)
+
+##################################
+# Computing the model predictions
+##################################
+(BGLM_CP_Model_Probabilities <- predict(BGLM_CP_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(BGLM_CP_Model_Indices <- predict(BGLM_CP_Model, 
+                           type = c("link")))
+max(BGLM_CP_Model_Indices)
+min(BGLM_CP_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+BGLM_CP_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_BGLM_CP)
+BGLM_CP_Model_Predictions$BGLM_CP_Prob <- BGLM_CP_Model_Probabilities
+BGLM_CP_Model_Predictions$BGLM_CP_LP <- BGLM_CP_Model_Indices
+BGLM_CP_Model_Predictions$UTI <- as.factor(BGLM_CP_Model_Predictions$UTI)
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+BGLM_CP_Model_Predictions %>%
+  ggplot(aes(x = BGLM_CP_LP ,
+             y = BGLM_CP_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Bayesian Generalized Linear Model With Cauchy Priors") +
+  theme_light() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+BGLM_CP_Prob_Low  <- BGLM_CP_Model_Predictions[BGLM_CP_Model_Predictions$UTI==0,
+                                    c("BGLM_CP_Prob")]
+BGLM_CP_Prob_High <- BGLM_CP_Model_Predictions[BGLM_CP_Model_Predictions$UTI==1,
+                                    c("BGLM_CP_Prob")]
+BGLM_CP_Model_Prob_ROC <- roc.curve(scores.class1 = BGLM_CP_Prob_Low,
+                               scores.class0 = BGLM_CP_Prob_High,
+                                curve = TRUE)
+
+plot(BGLM_CP_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Bayesian Generalized Linear Model With Cauchy Priors", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
 
 ```
 
