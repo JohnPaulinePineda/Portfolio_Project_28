@@ -338,7 +338,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<link rel="stylesheet" href="doc.css" type="text/css" />
+<style type="text/css">div.main-container {max-width: 1600px !important;}</style>
 
 
 
@@ -1102,7 +1102,7 @@ Estimation</h2>
 <div id="logistic-regression-lr" class="section level3">
 <h3>1.5.1 Logistic Regression (LR)</h3>
 <div class="line-block"><br />
-<strong>[A]</strong> The logistic regression model from both the
+<strong>[A]</strong> The logistic regression model from the
 <mark style="background-color: #CCECFF"><strong>stats</strong></mark>
 package was implemented. The <span style="color: #FF0000">UTI</span>
 response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
@@ -1124,17 +1124,17 @@ coefficient = -22.120<br />
      <strong>[C.6]</strong> <span style="color: #FF0000">Spermicide</span> coefficient = +2.868<br />
      <strong>[C.7]</strong> <span style="color: #FF0000">Diaphragm</span> coefficient = +71.283<br />
 <br />
-<strong>[B]</strong> The logistic curve formulated by plotting the
+<strong>[D]</strong> The logistic curve formulated by plotting the
 predicted probabilities against the classification index using the logit
 values showed a non-logistic profile with predicted points clustered in
 groups.<br />
 <br />
-<strong>[C]</strong> The performance of the model is summarized as
+<strong>[E]</strong> The performance of the model is summarized as
 follows:<br />
-     <strong>[C.1]</strong> Final model configuration is fixed due to
+     <strong>[E.1]</strong> Final model configuration is fixed due to
 the absence of a hyperparameter<br />
-     <strong>[C.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
-     <strong>[C.3]</strong> Estimated probabilities were practically
+     <strong>[E.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
+     <strong>[E.3]</strong> Estimated probabilities were practically
 dichotomized into a limited set of values.<br />
 </div>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
@@ -1430,7 +1430,7 @@ dichotomized into a limited set of values.<br />
 <h3>1.5.2 Firth’s Bias-Reduced Logistic Regression (FBRLR)</h3>
 <div class="line-block"><br />
 <strong>[A]</strong> The Firth’s bias-reduced logistic regression model
-from both the
+from the
 <mark style="background-color: #CCECFF"><strong>logistf</strong></mark>
 package was implemented. The <span style="color: #FF0000">UTI</span>
 response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
@@ -1454,17 +1454,17 @@ coefficient = -2.048<br />
      <strong>[C.6]</strong> <span style="color: #FF0000">Spermicide</span> coefficient = +3.019<br />
      <strong>[C.7]</strong> <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409<br />
 <br />
-<strong>[B]</strong> The logistic curve formulated by plotting the
+<strong>[D]</strong> The logistic curve formulated by plotting the
 predicted probabilities against the classification index using the logit
 values showed a valid logistic profile with reasonably distributed
 predicted points.<br />
 <br />
-<strong>[C]</strong> The performance of the model is summarized as
+<strong>[E]</strong> The performance of the model is summarized as
 follows:<br />
-     <strong>[C.1]</strong> Final model configuration involves
+     <strong>[E.1]</strong> Final model configuration involves
 maxit=1000<br />
-     <strong>[C.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
-     <strong>[C.3]</strong> Estimated probabilities were reasonably
+     <strong>[E.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
+     <strong>[E.3]</strong> Estimated probabilities were reasonably
 distributed across a set of values.<br />
 </div>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
@@ -1671,6 +1671,45 @@ distributed across a set of values.<br />
 </div>
 <div id="firths-logistic-regression-with-added-covariate-flac" class="section level3">
 <h3>1.5.3 Firth’s Logistic Regression With Added Covariate (FLAC)</h3>
+<div class="line-block"><br />
+<strong>[A]</strong> The Firth’s logistic regression with added
+covariate model from the
+<mark style="background-color: #CCECFF"><strong>logistf</strong></mark>
+package was implemented. The <span style="color: #FF0000">UTI</span>
+response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
+<br />
+<strong>[B]</strong> The model contains 1 hyperparameter:<br />
+     <strong>[B.1]</strong> <span style="color: #FF0000">maxit</span> =
+maximum number of iterations for the penalized-likelihood logistic
+regression held constant at a value of 1000<br />
+<br />
+<strong>[C]</strong> The model was not able to sufficiently compensate
+for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in
+reasonably valid estimated coefficients and standard errors.<br />
+     <strong>[C.1]</strong> <span style="color: #FF0000">Intercept</span> coefficient = -3.302<br />
+     <strong>[C.2]</strong> <span style="color: #FF0000">Age_24</span>
+coefficient = -1.487<br />
+     <strong>[C.3]</strong> <span style="color: #FF0000">Contraceptive</span> coefficient = -1.042<br />
+     <strong>[C.4]</strong> <span style="color: #FF0000">Condom</span>
+coefficient = -2.115<br />
+     <strong>[C.5]</strong> <span style="color: #FF0000">LubricatedCondom</span> coefficient =
+-1.231<br />
+     <strong>[C.6]</strong> <span style="color: #FF0000">Spermicide</span> coefficient = +3.115<br />
+     <strong>[C.7]</strong> <span style="color: #FF0000">Diaphragm</span> coefficient = +10.507<br />
+<br />
+<strong>[D]</strong> The logistic curve formulated by plotting the
+predicted probabilities against the classification index using the logit
+values showed a valid logistic profile with reasonably distributed
+predicted points.<br />
+<br />
+<strong>[E]</strong> The performance of the model is summarized as
+follows:<br />
+     <strong>[E.1]</strong> Final model configuration involves
+maxit=1000<br />
+     <strong>[E.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
+     <strong>[E.3]</strong> Estimated probabilities were reasonably
+distributed across a set of values.<br />
+</div>
 <div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a local object</span></span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="co"># for the train set</span></span>
