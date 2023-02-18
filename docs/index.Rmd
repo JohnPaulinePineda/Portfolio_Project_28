@@ -445,7 +445,7 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
 |
 | **[B]** The model does not contain any hyperparameter.
 |
-| **[C]** The quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor resulted in the inflation of its estimated coefficients and standard errors.
+| **[C]** The model was not able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in the hyper-inflation of its estimated coefficients and standard errors.
 |      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -2.868 
 |      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.052
 |      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -21.885
@@ -556,23 +556,23 @@ plot(LR_Model_Prob_ROC,
 | **[A]** The Firth's bias-reduced logistic regression model from both the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
 | **[B]** The model contains 1 hyperparameter:
-|      **[B.1]** <span style="color: #FF0000">degree</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
+|      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
 |
-| **[C]** The quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor resulted in the inflation of its estimated coefficients and standard errors.
-|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -2.868 
-|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.052
-|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -21.885
-|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -22.120 
-|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.687
-|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +2.868
-|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +71.283
+| **[C]** The model was not able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.345 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.539
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.014
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -2.048 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.214
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +3.019
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409
 |
-| **[B]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a non-logistic profile with predicted points clustered in groups.
+| **[B]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
 |
 | **[C]** The performance of the model is summarized as follows:
-|      **[C.1]** Final model configuration is fixed due to the absence of a hyperparameter
+|      **[C.1]** Final model configuration involves maxit=1000
 |      **[C.2]** Apparent ROC Curve AUC = 0.99996
-|      **[C.3]** Estimated probabilities were practically dichotomized into a limited set of values. 
+|      **[C.3]** Estimated probabilities were reasonably distributed across a set of values. 
 |
 ```{r section_1.5.2, warning=FALSE, message=FALSE}
 ##################################

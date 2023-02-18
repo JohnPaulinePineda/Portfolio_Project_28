@@ -1105,15 +1105,14 @@ Estimation</h2>
 <strong>[A]</strong> The logistic regression model from both the
 <mark style="background-color: #CCECFF"><strong>stats</strong></mark>
 package was implemented. The <span style="color: #FF0000">UTI</span>
-response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, &lt;span style=“color:
-#FF0000”LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
+response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
 <br />
 <strong>[B]</strong> The model does not contain any
 hyperparameter.<br />
 <br />
-<strong>[C]</strong> The quasi-complete condition simulated for the
-<span style="color: #FF0000">Diaphragm</span> predictor resulted in the
-inflation of its estimated coefficients and standard errors.<br />
+<strong>[C]</strong> The model was not able to sufficiently compensate
+for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in the
+hyper-inflation of its estimated coefficients and standard errors.<br />
      <strong>[C.1]</strong> <span style="color: #FF0000">Intercept</span> coefficient = -2.868<br />
      <strong>[C.2]</strong> <span style="color: #FF0000">Age_24</span>
 coefficient = -1.052<br />
@@ -1434,38 +1433,39 @@ dichotomized into a limited set of values.<br />
 from both the
 <mark style="background-color: #CCECFF"><strong>logistf</strong></mark>
 package was implemented. The <span style="color: #FF0000">UTI</span>
-response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, &lt;span style=“color:
-#FF0000”LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
+response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.<br />
 <br />
-<strong>[B]</strong> The model does not contain any
-hyperparameter.<br />
+<strong>[B]</strong> The model contains 1 hyperparameter:<br />
+     <strong>[B.1]</strong> <span style="color: #FF0000">maxit</span> =
+maximum number of iterations for the penalized-likelihood logistic
+regression held constant at a value of 1000<br />
 <br />
-<strong>[C]</strong> The quasi-complete condition simulated for the
-<span style="color: #FF0000">Diaphragm</span> predictor resulted in the
-inflation of its estimated coefficients and standard errors.<br />
-     <strong>[C.1]</strong> <span style="color: #FF0000">Intercept</span> coefficient = -2.868<br />
+<strong>[C]</strong> The model was not able to sufficiently compensate
+for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in
+reasonably valid estimated coefficients and standard errors.<br />
+     <strong>[C.1]</strong> <span style="color: #FF0000">Intercept</span> coefficient = -3.345<br />
      <strong>[C.2]</strong> <span style="color: #FF0000">Age_24</span>
-coefficient = -1.052<br />
-     <strong>[C.3]</strong> <span style="color: #FF0000">Contraceptive</span> coefficient = -21.885<br />
+coefficient = -1.539<br />
+     <strong>[C.3]</strong> <span style="color: #FF0000">Contraceptive</span> coefficient = -1.014<br />
      <strong>[C.4]</strong> <span style="color: #FF0000">Condom</span>
-coefficient = -22.120<br />
+coefficient = -2.048<br />
      <strong>[C.5]</strong> <span style="color: #FF0000">LubricatedCondom</span> coefficient =
--1.687<br />
-     <strong>[C.6]</strong> <span style="color: #FF0000">Spermicide</span> coefficient = +2.868<br />
-     <strong>[C.7]</strong> <span style="color: #FF0000">Diaphragm</span> coefficient = +71.283<br />
+-1.214<br />
+     <strong>[C.6]</strong> <span style="color: #FF0000">Spermicide</span> coefficient = +3.019<br />
+     <strong>[C.7]</strong> <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409<br />
 <br />
 <strong>[B]</strong> The logistic curve formulated by plotting the
 predicted probabilities against the classification index using the logit
-values showed a non-logistic profile with predicted points clustered in
-groups.<br />
+values showed a valid logistic profile with reasonably distributed
+predicted points.<br />
 <br />
 <strong>[C]</strong> The performance of the model is summarized as
 follows:<br />
-     <strong>[C.1]</strong> Final model configuration is fixed due to
-the absence of a hyperparameter<br />
+     <strong>[C.1]</strong> Final model configuration involves
+maxit=1000<br />
      <strong>[C.2]</strong> Apparent ROC Curve AUC = 0.99996<br />
-     <strong>[C.3]</strong> Estimated probabilities were practically
-dichotomized into a limited set of values.<br />
+     <strong>[C.3]</strong> Estimated probabilities were reasonably
+distributed across a set of values.<br />
 </div>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a local object</span></span>
