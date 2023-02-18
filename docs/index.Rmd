@@ -671,7 +671,7 @@ plot(FBRLR_Model_Prob_ROC,
 | **[B]** The model contains 1 hyperparameter:
 |      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
 |
-| **[C]** The model was not able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
 |      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.302 
 |      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.487
 |      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.042
@@ -778,8 +778,115 @@ plot(FLAC_Model_Prob_ROC,
 ```
 
 ###  1.5.4 Firth's Logistic Regression With Intercept Correction (FLIC)
-
+|
+| **[A]** The Firth's logistic regression with intercept correction model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.274 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.539
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.014
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -2.048 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.214
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +3.019
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves maxit=1000
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a set of values. 
+|
 ```{r section_1.5.4, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_FLIC <- UTI
+
+##################################
+# Formulating the Logistic Regression model
+##################################
+FLIC_Model <- flic(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_FLIC,
+                       control=logistf.control(maxit = 10000))
+
+##################################
+# Consolidating the model results
+##################################
+summary(FLIC_Model)
+
+##################################
+# Computing the model predictions
+##################################
+(FLIC_Model_Probabilities <- predict(FLIC_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(FLIC_Model_Indices <- predict(FLIC_Model, 
+                           type = c("link")))
+max(FLIC_Model_Indices)
+min(FLIC_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+FLIC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLIC)
+FLIC_Model_Predictions$FLIC_Prob <- FLIC_Model_Probabilities
+FLIC_Model_Predictions$FLIC_LP <- FLIC_Model_Indices
+FLIC_Model_Predictions$UTI <- as.factor(FLIC_Model_Predictions$UTI)
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+FLIC_Model_Predictions %>%
+  ggplot(aes(x = FLIC_LP ,
+             y = FLIC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Intercept Correction") +
+  theme_light() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+FLIC_Prob_Low  <- FLIC_Model_Predictions[FLIC_Model_Predictions$UTI==0,
+                                    c("FLIC_Prob")]
+FLIC_Prob_High <- FLIC_Model_Predictions[FLIC_Model_Predictions$UTI==1,
+                                    c("FLIC_Prob")]
+FLIC_Model_Prob_ROC <- roc.curve(scores.class1 = FLIC_Prob_Low,
+                               scores.class0 = FLIC_Prob_High,
+                                curve = TRUE)
+
+plot(FLIC_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Firth's Logistic Regression With Intercept Correction", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
 
 ```
 
