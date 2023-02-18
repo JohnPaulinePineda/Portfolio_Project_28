@@ -667,6 +667,92 @@ plot(FBRLR_Model_Prob_ROC,
 ###  1.5.3 Firth's Logistic Regression With Added Covariate (FLAC)
 
 ```{r section_1.5.3, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_FLAC <- UTI
+
+##################################
+# Formulating the Logistic Regression model
+##################################
+FLAC_Model <- flac(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_FLAC,
+                       control=logistf.control(maxit = 10000))
+
+##################################
+# Consolidating the model results
+##################################
+summary(FLAC_Model)
+
+##################################
+# Computing the model predictions
+##################################
+(FLAC_Model_Probabilities <- predict(FLAC_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(FLAC_Model_Indices <- predict(FLAC_Model, 
+                           type = c("link")))
+max(FLAC_Model_Indices)
+min(FLAC_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+FLAC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLAC)
+FLAC_Model_Predictions$FLAC_Prob <- FLAC_Model_Probabilities
+FLAC_Model_Predictions$FLAC_LP <- FLAC_Model_Indices
+FLAC_Model_Predictions$UTI <- as.factor(FLAC_Model_Predictions$UTI)
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+FLAC_Model_Predictions %>%
+  ggplot(aes(x = FLAC_LP ,
+             y = FLAC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Added Covariate") +
+  theme_light() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+FLAC_Prob_Low  <- FLAC_Model_Predictions[FLAC_Model_Predictions$UTI==0,
+                                    c("FLAC_Prob")]
+FLAC_Prob_High <- FLAC_Model_Predictions[FLAC_Model_Predictions$UTI==1,
+                                    c("FLAC_Prob")]
+FLAC_Model_Prob_ROC <- roc.curve(scores.class1 = FLAC_Prob_Low,
+                               scores.class0 = FLAC_Prob_High,
+                                curve = TRUE)
+
+plot(FLAC_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Firth's Logistic Regression With Added Covariate", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
 
 ```
 
