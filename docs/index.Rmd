@@ -1203,8 +1203,7 @@ plot(PLR_R_Model_Prob_ROC,
 | **[Article]** [Lattice Graphs](http://www.sthda.com/english/wiki/lattice-graphs) by Alboukadel Kassambara
 
 | **[Article]** [What is Complete or Quasi-Complete Separation in Logistic/Probit Regression and How Do We Deal with Them](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faqwhat-is-complete-or-quasi-complete-separation-in-logisticprobit-regression-and-how-do-we-deal-with-them/) by UCLA Advanced Research Computing Group
-| **[Article]** [What Is Complete Separation in Binary Logistic Regression?](https://blog.minitab.com/en/starting-out-with-statistical-software/what-is-complete-separation-in-binary-logistic-regression) by Eric Heckman 
-| **[Article]** [xxx](xxx) by xxx 
+| **[Article]** [What Is Complete Separation in Binary Logistic Regression?](https://blog.minitab.com/en/starting-out-with-statistical-software/what-is-complete-separation-in-binary-logistic-regression) by Eric Heckman
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
@@ -1217,6 +1216,7 @@ plot(PLR_R_Model_Prob_ROC,
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
+| **[Article]** [Choosing Hyperparameters in Penalized Regression](https://privefl.github.io/blog/choosing-hyper-parameters-in-penalized-regression/) by Florian Prive 
 | **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
 |
