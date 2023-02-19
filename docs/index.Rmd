@@ -73,6 +73,7 @@ library(PRROC)
 library(logistf)
 library(arm)
 library(glmnet)
+library(SciViews)
 
 ##################################
 # Loading source and
@@ -469,7 +470,8 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
 PMA_PreModelling_Train_LR <- UTI
 
 ##################################
-# Formulating the Logistic Regression model
+# Formulating the structure of the
+# Logistic Regression model
 ##################################
 LR_Model <- glm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
                 data = PMA_PreModelling_Train_LR,
@@ -582,7 +584,8 @@ plot(LR_Model_Prob_ROC,
 PMA_PreModelling_Train_FBRLR <- UTI
 
 ##################################
-# Formulating the Logistic Regression model
+# Formulating the structure of the 
+# Firth's Bias-Reduced Logistic Regression model
 ##################################
 FBRLR_Model <- logistf(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
                        data = PMA_PreModelling_Train_FBRLR,
@@ -695,7 +698,8 @@ plot(FBRLR_Model_Prob_ROC,
 PMA_PreModelling_Train_FLAC <- UTI
 
 ##################################
-# Formulating the Logistic Regression model
+# Formulating the structure of the
+# Firth's Logistic Regression With Added Covariate model
 ##################################
 FLAC_Model <- flac(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
                        data = PMA_PreModelling_Train_FLAC,
@@ -808,7 +812,8 @@ plot(FLAC_Model_Prob_ROC,
 PMA_PreModelling_Train_FLIC <- UTI
 
 ##################################
-# Formulating the Logistic Regression model
+# Formulating the structure of the
+# Firth's Logistic Regression With Intercept Correction model
 ##################################
 FLIC_Model <- flic(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
                        data = PMA_PreModelling_Train_FLIC,
@@ -920,7 +925,8 @@ plot(FLIC_Model_Prob_ROC,
 PMA_PreModelling_Train_BGLM_CP <- UTI
 
 ##################################
-# Formulating the Logistic Regression model
+# Formulating the structure of the
+# Bayesian Generalized Linear Model With Cauchy Priors model
 ##################################
 BGLM_CP_Model <- bayesglm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
                        data = PMA_PreModelling_Train_BGLM_CP,
@@ -1002,9 +1008,138 @@ plot(BGLM_CP_Model_Prob_ROC,
 
 ```
 
-###  1.5.6 Ridge Regression (RR)
-
+###  1.5.6 Penalized Logistic Regression - Ridge (PLR_R)
+|
+| **[A]** The penalized logistic regression - ridge model from the <mark style="background-color: #CCECFF">**glmnet**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">lambda</span> = shrinkage parameter made to vary across a range of values equal to 0.05 to 490
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -1.719 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -0.363
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -0.185
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = +0.324 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -0.472
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = -0.149
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +4.129
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves lambda=0.05.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99912
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values. 
+|
 ```{r section_1.5.6, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_PLR_R <- UTI
+PLR_R_Response   <- PMA_PreModelling_Train_PLR_R[,c("UTI")]
+PLR_R_Predictors <- model.matrix(UTI~.,
+                                  PMA_PreModelling_Train_PLR_R)[,2:ncol(PMA_PreModelling_Train_PLR_R)]
+
+##################################
+# Conducting hyperparameter tuning
+# of the lambda parameter
+# using cross-validation
+##################################
+(PLR_R_LambdaCV <- cv.glmnet(PLR_R_Predictors,
+                            PLR_R_Response,
+                            family = "binomial",
+                            alpha = 0))
+PLR_R_LambdaCV$lambda
+plot(PLR_R_LambdaCV)
+(PLR_R_MinLambda <- PLR_R_LambdaCV$lambda.min)
+
+##################################
+# Formulating the structure of the
+# Penalized Logistic Regression - Ridge model
+##################################
+PLR_R_Model <- glmnet(PLR_R_Predictors,
+                      PLR_R_Response,
+                      alpha = 0,
+                      family = "binomial",
+                      lambda = PLR_R_MinLambda)
+
+##################################
+# Consolidating the model results
+##################################
+summary(PLR_R_Model)
+coef(PLR_R_Model)
+
+##################################
+# Computing the model predictions
+##################################
+(PLR_R_Model_Probabilities <- PLR_R_Model %>% 
+   predict(PLR_R_Predictors, type = c("response")) %>% 
+   as.vector())
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(PLR_R_Model_Indices <- PLR_R_Model %>% 
+   predict(PLR_R_Predictors, type = c("link")) %>% 
+   as.vector())
+max(PLR_R_Model_Indices)
+min(PLR_R_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+PLR_R_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_PLR_R)
+PLR_R_Model_Predictions$PLR_R_Prob <- PLR_R_Model_Probabilities
+PLR_R_Model_Predictions$PLR_R_LP <- PLR_R_Model_Indices
+PLR_R_Model_Predictions$UTI <- as.factor(PLR_R_Model_Predictions$UTI)
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+PLR_R_Model_Predictions %>%
+  ggplot(aes(x = PLR_R_LP ,
+             y = PLR_R_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-3,3), breaks=seq(-3,3,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Penalized Logistic Regression - Ridge") +
+  theme_light() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+PLR_R_Prob_Low  <- PLR_R_Model_Predictions[PLR_R_Model_Predictions$UTI==0,
+                                    c("PLR_R_Prob")]
+PLR_R_Prob_High <- PLR_R_Model_Predictions[PLR_R_Model_Predictions$UTI==1,
+                                    c("PLR_R_Prob")]
+PLR_R_Model_Prob_ROC <- roc.curve(scores.class1 = PLR_R_Prob_Low,
+                               scores.class0 = PLR_R_Prob_High,
+                                curve = TRUE)
+
+plot(PLR_R_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Penalized Logistic Regression - Ridge", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
 
 ```
 
