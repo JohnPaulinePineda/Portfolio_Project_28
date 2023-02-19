@@ -70,10 +70,11 @@ library(pamr)
 library(OptimalCutpoints)
 library(broom)
 library(PRROC)
+library(ggpubr)
+library(Hmisc)
 library(logistf)
 library(arm)
 library(glmnet)
-library(SciViews)
 
 ##################################
 # Loading source and
@@ -108,6 +109,7 @@ UTI_Train <- as.data.frame(UTI_Train)
 dim(UTI_Train)
 str(UTI_Train)
 summary(UTI_Train)
+describe(UTI_Train)
 
 ##################################
 # Formulating a data type assessment summary
@@ -506,6 +508,7 @@ LR_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_LR)
 LR_Model_Predictions$LR_Prob <- LR_Model_Probabilities
 LR_Model_Predictions$LR_LP <- LR_Model_Indices
 LR_Model_Predictions$UTI <- as.factor(LR_Model_Predictions$UTI)
+LR_Model_Predictions$Label <- rep("LR",nrow(LR_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -524,7 +527,7 @@ LR_Model_Predictions %>%
   scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Logistic Regression") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -620,6 +623,7 @@ FBRLR_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FBRLR)
 FBRLR_Model_Predictions$FBRLR_Prob <- FBRLR_Model_Probabilities
 FBRLR_Model_Predictions$FBRLR_LP <- FBRLR_Model_Indices
 FBRLR_Model_Predictions$UTI <- as.factor(FBRLR_Model_Predictions$UTI)
+FBRLR_Model_Predictions$Label <- rep("FBRLR",nrow(FBRLR_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -638,7 +642,7 @@ FBRLR_Model_Predictions %>%
   scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Bias-Reduced Logistic Regression") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -734,6 +738,7 @@ FLAC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLAC)
 FLAC_Model_Predictions$FLAC_Prob <- FLAC_Model_Probabilities
 FLAC_Model_Predictions$FLAC_LP <- FLAC_Model_Indices
 FLAC_Model_Predictions$UTI <- as.factor(FLAC_Model_Predictions$UTI)
+FLAC_Model_Predictions$Label <- rep("FLAC",nrow(FLAC_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -752,7 +757,7 @@ FLAC_Model_Predictions %>%
   scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Added Covariate") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -848,6 +853,7 @@ FLIC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLIC)
 FLIC_Model_Predictions$FLIC_Prob <- FLIC_Model_Probabilities
 FLIC_Model_Predictions$FLIC_LP <- FLIC_Model_Indices
 FLIC_Model_Predictions$UTI <- as.factor(FLIC_Model_Predictions$UTI)
+FLIC_Model_Predictions$Label <- rep("FLIC",nrow(FLIC_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -866,7 +872,7 @@ FLIC_Model_Predictions %>%
   scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Intercept Correction") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -961,6 +967,7 @@ BGLM_CP_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_BGLM_CP)
 BGLM_CP_Model_Predictions$BGLM_CP_Prob <- BGLM_CP_Model_Probabilities
 BGLM_CP_Model_Predictions$BGLM_CP_LP <- BGLM_CP_Model_Indices
 BGLM_CP_Model_Predictions$UTI <- as.factor(BGLM_CP_Model_Predictions$UTI)
+BGLM_CP_Model_Predictions$Label <- rep("BGLM_CP",nrow(BGLM_CP_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -979,7 +986,7 @@ BGLM_CP_Model_Predictions %>%
   scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Bayesian Generalized Linear Model With Cauchy Priors") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -1096,6 +1103,7 @@ PLR_R_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_PLR_R)
 PLR_R_Model_Predictions$PLR_R_Prob <- PLR_R_Model_Probabilities
 PLR_R_Model_Predictions$PLR_R_LP <- PLR_R_Model_Indices
 PLR_R_Model_Predictions$UTI <- as.factor(PLR_R_Model_Predictions$UTI)
+PLR_R_Model_Predictions$Label <- rep("PLR_R",nrow(PLR_R_Model_Predictions))
 
 ##################################
 # Formulating the probability curve
@@ -1114,7 +1122,7 @@ PLR_R_Model_Predictions %>%
   scale_x_continuous( limits=c(-3,3), breaks=seq(-3,3,by=1)) +
   scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
   ggtitle("Estimated UTI Probabilities Based on Classification Index : Penalized Logistic Regression - Ridge") +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
         axis.title.x = element_text(color="black", size=12, face="bold"),
         axis.title.y = element_text(color="black", size=12, face="bold"),
@@ -1149,6 +1157,136 @@ plot(PLR_R_Model_Prob_ROC,
 | Model estimation comparison:
 |
 ```{r section_1.6, warning=FALSE, message=FALSE}
+##################################
+# Replotting the logistic curves
+##################################
+LR_LogisticCurvePlot <- LR_Model_Predictions %>%
+  ggplot(aes(x = LR_LP ,
+             y = LR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FBRLR_LogisticCurvePlot <- FBRLR_Model_Predictions %>%
+  ggplot(aes(x = FBRLR_LP ,
+             y = FBRLR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FLAC_LogisticCurvePlot <- FLAC_Model_Predictions %>%
+  ggplot(aes(x = FLAC_LP ,
+             y = FLAC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FLIC_LogisticCurvePlot <- FLIC_Model_Predictions %>%
+  ggplot(aes(x = FLIC_LP ,
+             y = FLIC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+BGLM_CP_LogisticCurvePlot <- BGLM_CP_Model_Predictions %>%
+  ggplot(aes(x = BGLM_CP_LP ,
+             y = BGLM_CP_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+PLR_R_LogisticCurvePlot <- PLR_R_Model_Predictions %>%
+  ggplot(aes(x = PLR_R_LP ,
+             y = PLR_R_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+RLR_LogisticCurvePlot <- ggarrange(LR_LogisticCurvePlot,
+                                   FBRLR_LogisticCurvePlot,
+                                   FLAC_LogisticCurvePlot,
+                                   FLIC_LogisticCurvePlot,
+                                   BGLM_CP_LogisticCurvePlot,
+                                   PLR_R_LogisticCurvePlot,
+                                   ncol=2, nrow=3)
+
+annotate_figure(RLR_LogisticCurvePlot,
+                top = text_grob("Estimated UTI Probabilities Based on Classification Index", 
+                                color = "black", 
+                                face = "bold", 
+                                size = 14))
 
 ```
 
@@ -1193,6 +1331,8 @@ plot(PLR_R_Model_Prob_ROC,
 | **[R Package]** [OptimalCutpoints](https://cran.r-project.org/web/packages/OptimalCutpoints/OptimalCutpoints.pdf) by Monica Lopez-Raton and Maria Xose Rodriguez-Alvarez
 | **[R Package]** [broom](https://cran.r-project.org/web/packages/broom/broom.pdf) by Simon Couch
 | **[R Package]** [PRROC](https://cran.r-project.org/web/packages/PRROC/PRROC.pdf) by Jan Grau and Jens Keilwagen
+| **[R Package]** [ggpubr](https://cran.microsoft.com/snapshot/2022-04-13/web/packages/ggpubr/ggpubr.pdf) by 	Alboukadel Kassambara
+| **[R Package]** [Hmisc](https://cran.r-project.org/web/packages/Hmisc/Hmisc.pdf) by Frank Harrell
 | **[R Package]** [logistf](https://cran.r-project.org/web/packages/logistf/logistf.pdf) by Georg Heinze
 | **[R Package]** [arm](https://cran.r-project.org/web/packages/arm/arm.pdf) by Yu-Sung Su
 | **[R Package]** [glmnet](https://cran.r-project.org/web/packages/glmnet/glmnet.pdf) by Trevor Hastie
@@ -1215,7 +1355,7 @@ plot(PLR_R_Model_Prob_ROC,
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
 | **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [An Introduction to glmnet](https://glmnet.stanford.edu/articles/glmnet.html) by Trevor Hastie, Junyang Qian and Kenneth Tay
 | **[Article]** [Choosing Hyperparameters in Penalized Regression](https://privefl.github.io/blog/choosing-hyper-parameters-in-penalized-regression/) by Florian Prive 
 | **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
