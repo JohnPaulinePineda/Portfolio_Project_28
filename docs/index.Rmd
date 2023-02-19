@@ -488,6 +488,7 @@ LR_Model_Coef <- (as.data.frame(LR_Model$coefficients))
 LR_Model_Coef$Coef <- rownames(LR_Model_Coef)
 LR_Model_Coef$Model <- rep("LR",nrow(LR_Model_Coef))
 colnames(LR_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(LR_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -608,6 +609,7 @@ FBRLR_Model_Coef <- (as.data.frame(FBRLR_Model$coefficients))
 FBRLR_Model_Coef$Coef <- rownames(FBRLR_Model_Coef)
 FBRLR_Model_Coef$Model <- rep("FBRLR",nrow(FBRLR_Model_Coef))
 colnames(FBRLR_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FBRLR_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -728,6 +730,7 @@ FLAC_Model_Coef <- (as.data.frame(FLAC_Model$coefficients))
 FLAC_Model_Coef$Coef <- rownames(FLAC_Model_Coef)
 FLAC_Model_Coef$Model <- rep("FLAC",nrow(FLAC_Model_Coef))
 colnames(FLAC_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FLAC_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -848,6 +851,7 @@ FLIC_Model_Coef <- (as.data.frame(FLIC_Model$coefficients))
 FLIC_Model_Coef$Coef <- rownames(FLIC_Model_Coef)
 FLIC_Model_Coef$Model <- rep("FLIC",nrow(FLIC_Model_Coef))
 colnames(FLIC_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FLIC_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -967,6 +971,7 @@ BGLM_CP_Model_Coef <- (as.data.frame(BGLM_CP_Model$coefficients))
 BGLM_CP_Model_Coef$Coef <- rownames(BGLM_CP_Model_Coef)
 BGLM_CP_Model_Coef$Model <- rep("BGLM_CP",nrow(BGLM_CP_Model_Coef))
 colnames(BGLM_CP_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(BGLM_CP_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -1056,7 +1061,7 @@ plot(BGLM_CP_Model_Prob_ROC,
 |      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = -0.149
 |      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +4.129
 |
-| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a a slightly kinked logistic profile with reasonably distributed predicted points.
 |
 | **[E]** The performance of the model is summarized as follows:
 |      **[E.1]** Final model configuration involves lambda=0.05.
@@ -1106,6 +1111,7 @@ PLR_R_Model_Coef <- (as.data.frame(coef(PLR_R_Model)[1:7]))
 PLR_R_Model_Coef$Coef <- rownames(coef(PLR_R_Model))
 PLR_R_Model_Coef$Model <- rep("PLR_R",nrow(PLR_R_Model_Coef))
 colnames(PLR_R_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(PLR_R_Model_Coef, rownames=FALSE)
 
 ##################################
 # Computing the model predictions
@@ -1185,6 +1191,12 @@ plot(PLR_R_Model_Prob_ROC,
 ##  1.6 Probability Curve and Coefficient Estimation Evaluation Summary
 |
 | Model estimation comparison:
+|
+| **[A]** The robust logistic regression models which were able to sufficiently compensate for the quasi-complete condition through stable coefficient estimates and valid logistic profiles with reasonably distributed predicted points are the following :
+|      **[A.1]** FBRLR : Firth’s Bias-Reduced Logistic Regression (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.2]** FLAC : Firth’s Logistic Regression With Added Covariate (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.3]** FLIC : Firth’s Logistic Regression With Intercept Correction (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.4]**BGLM_CP : Bayesian Generalized Linear Model With Cauchy Priors (<mark style="background-color: #CCECFF">**logistf**</mark> package)
 |
 ```{r section_1.6, warning=FALSE, message=FALSE}
 ##################################
@@ -1317,6 +1329,51 @@ annotate_figure(RLR_LogisticCurvePlot,
                                 color = "black", 
                                 face = "bold", 
                                 size = 14))
+
+##################################
+# Formulating the logistic regression model 
+# coefficient comparison plot
+##################################
+RLRCoefficient_Summary <- rbind(LR_Model_Coef,
+                                FBRLR_Model_Coef,
+                                FLAC_Model_Coef,
+                                FLIC_Model_Coef,
+                                BGLM_CP_Model_Coef,
+                                PLR_R_Model_Coef)
+
+RLRCoefficient_Summary <- as.data.frame(RLRCoefficient_Summary)
+
+RLRCoefficient_Summary$Estimates <- as.numeric(as.character(RLRCoefficient_Summary$Estimates))
+RLRCoefficient_Summary$Coefficients <- factor(RLRCoefficient_Summary$Coefficients,
+                                        levels = c("Diaphragm",
+                                                   "Spermicide",
+                                                   "LubricatedCondom",
+                                                   "Condom",
+                                                   "Contraceptive",
+                                                   "Age_24",
+                                                   "(Intercept)"))
+RLRCoefficient_Summary$Model <- factor(RLRCoefficient_Summary$Model,
+                                        levels = c("PLR_R",
+                                                   "BGLM_CP",
+                                                   "FLIC",
+                                                   "FLAC",
+                                                   "FBRLR",
+                                                   "LR"))
+
+print(RLRCoefficient_Summary, row.names=FALSE)
+
+(ROCCurveAUC_Plot <- dotplot(Model ~ Estimates | Coefficients,
+                           data = RLRCoefficient_Summary,
+                           main = "Model Coefficient Estimation Comparison",
+                           ylab = "Model",
+                           xlab = "Coefficient Estimates",
+                           auto.key = list(adj = 1),
+                           type=c("p", "h"),       
+                           origin = 0,
+                           alpha = 0.45,
+                           pch = 16,
+                           cex = 2,
+                           layout = c(3,3)))
 
 ```
 
