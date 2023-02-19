@@ -1386,6 +1386,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 | **[Book]** [Data Modeling Methods](https://bookdown.org/larget_jacob/data-modeling-methods/) by Jacob Larget
 | **[Book]** [Introduction to R and Statistics](https://saestatsteaching.tech/) by University of Western Australia
 | **[Book]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
+| **[Book]** [Introduction to Regression Methods for Public Health Using R](https://www.bookdown.org/rwnahhas/RMPH/) by Ramzi Nahhas
 | **[Book]** [Introduction to Research Methods](https://bookdown.org/ejvanholm/Textbook/) by Eric van Holm
 | **[R Package]** [AppliedPredictiveModeling](https://cran.r-project.org/web//packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf) by Max Kuhn
 | **[R Package]** [caret](https://topepo.github.io/caret/index.html) by Max Kuhn
@@ -1418,7 +1419,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 | **[R Package]** [OptimalCutpoints](https://cran.r-project.org/web/packages/OptimalCutpoints/OptimalCutpoints.pdf) by Monica Lopez-Raton and Maria Xose Rodriguez-Alvarez
 | **[R Package]** [broom](https://cran.r-project.org/web/packages/broom/broom.pdf) by Simon Couch
 | **[R Package]** [PRROC](https://cran.r-project.org/web/packages/PRROC/PRROC.pdf) by Jan Grau and Jens Keilwagen
-| **[R Package]** [ggpubr](https://cran.microsoft.com/snapshot/2022-04-13/web/packages/ggpubr/ggpubr.pdf) by 	Alboukadel Kassambara
+| **[R Package]** [ggpubr](https://cran.microsoft.com/snapshot/2022-04-13/web/packages/ggpubr/ggpubr.pdf) by Alboukadel Kassambara
 | **[R Package]** [Hmisc](https://cran.r-project.org/web/packages/Hmisc/Hmisc.pdf) by Frank Harrell
 | **[R Package]** [logistf](https://cran.r-project.org/web/packages/logistf/logistf.pdf) by Georg Heinze
 | **[R Package]** [arm](https://cran.r-project.org/web/packages/arm/arm.pdf) by Yu-Sung Su
@@ -1433,19 +1434,20 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 | **[Article]** [What Is Complete Separation in Binary Logistic Regression?](https://blog.minitab.com/en/starting-out-with-statistical-software/what-is-complete-separation-in-binary-logistic-regression) by Eric Heckman
 | **[Article]** [Separation and Convergence Issues in Logistic Regression](https://cscu.cornell.edu/wp-content/uploads/82_lgsbias.pdf) by Cornell Statistical Consulting Unit
 | **[Article]** [Firth Logistic Regression](https://www.r-bloggers.com/2010/11/example-8-15-firth-logistic-regression/) by Ken Kleinman
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
-| **[Article]** [xxx](xxx) by xxx
+| **[Article]** [Penalized Logistic Regression Essentials in R: Ridge, Lasso and Elastic Net](http://sthda.com/english/articles/36-classification-methods-essentials/149-penalized-logistic-regression-essentials-in-r-ridge-lasso-and-elastic-net/) by Alboukadel Kassambara
+| **[Article]** [Correcting the Quasi-complete Separation Issue in Logistic Regression Models](https://support.sas.com/resources/papers/proceedings16/10220-2016.pdf) by Xinghe Lu
 | **[Article]** [An Introduction to glmnet](https://glmnet.stanford.edu/articles/glmnet.html) by Trevor Hastie, Junyang Qian and Kenneth Tay
 | **[Article]** [Choosing Hyperparameters in Penalized Regression](https://privefl.github.io/blog/choosing-hyper-parameters-in-penalized-regression/) by Florian Prive 
 | **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
 | **[Publication]** [Dealing with Separation in Logistic Regression Models](https://www.cambridge.org/core/journals/political-analysis/article/abs/dealing-with-separation-in-logistic-regression-models/E2F30195EFFD5F79A9B27ACA5107922F) by Carlisle Rainey (Political Analysis)
+| **[Publication]** [Bias Reduction of Maximum Likelihood Estimates](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) by David Firth (Biometrika)
+| **[Publication]** [A Solution to the Problem of Separation in Logistic Regression](https://onlinelibrary.wiley.com/doi/10.1002/sim.1047) by Georg Heinze and Michael Schemper (Statistics in Medicine)
+| **[Publication]** [A Comparative Investigation of Methods for Logistic Regression with Separated or Nearly Separated Data](https://onlinelibrary.wiley.com/doi/10.1002/sim.2687) by Georg Heinze (Statistics in Medicine)
+| **[Publication]** [Confidence Intervals After Multiple Imputation: Combining Profile Likelihood Information from Logistic Regressions](https://onlinelibrary.wiley.com/doi/10.1002/sim.5899) by Georg Heinze, Meinhard Ploner and Jan Beyea (Statistics in Medicine)
+| **[Publication]** [Firth’s Logistic Regression with Rare Events: Accurate Effect Estimates and Predictions?](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) by Rainer Puhr, Georg Heinze, Mariana Nold, Lara Lusa and Angelika Geroldinger (Statistics in Medicine)
+| **[Publication]** [A Method for Computing Profile-Likelihood Based Confidence Intervals](https://rss.onlinelibrary.wiley.com/doi/abs/10.2307/2347496) by DJ Venzon and SH Moolgavkar (Applied Statistics)
+| **[Publication]** [A Weakly Informative Default Prior Distribution For Logistic And Other Regression Models”](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) by Andrew Gelman, Aleks Jakulin, Maria Grazia Pittau and Yu-Sung Su (The Annals of Applied
+Statistics)
 | **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
 |
 |
