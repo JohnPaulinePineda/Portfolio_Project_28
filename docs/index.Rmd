@@ -484,6 +484,11 @@ LR_Model <- glm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Sperm
 ##################################
 summary(LR_Model)
 
+LR_Model_Coef <- (as.data.frame(LR_Model$coefficients))
+LR_Model_Coef$Coef <- rownames(LR_Model_Coef)
+LR_Model_Coef$Model <- rep("LR",nrow(LR_Model_Coef))
+colnames(LR_Model_Coef) <- c("Estimates","Coefficients","Model")
+
 ##################################
 # Computing the model predictions
 ##################################
@@ -598,6 +603,11 @@ FBRLR_Model <- logistf(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom 
 # Consolidating the model results
 ##################################
 summary(FBRLR_Model)
+
+FBRLR_Model_Coef <- (as.data.frame(FBRLR_Model$coefficients))
+FBRLR_Model_Coef$Coef <- rownames(FBRLR_Model_Coef)
+FBRLR_Model_Coef$Model <- rep("FBRLR",nrow(FBRLR_Model_Coef))
+colnames(FBRLR_Model_Coef) <- c("Estimates","Coefficients","Model")
 
 ##################################
 # Computing the model predictions
@@ -714,6 +724,11 @@ FLAC_Model <- flac(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Sp
 ##################################
 summary(FLAC_Model)
 
+FLAC_Model_Coef <- (as.data.frame(FLAC_Model$coefficients))
+FLAC_Model_Coef$Coef <- rownames(FLAC_Model_Coef)
+FLAC_Model_Coef$Model <- rep("FLAC",nrow(FLAC_Model_Coef))
+colnames(FLAC_Model_Coef) <- c("Estimates","Coefficients","Model")
+
 ##################################
 # Computing the model predictions
 ##################################
@@ -829,6 +844,11 @@ FLIC_Model <- flic(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Sp
 ##################################
 summary(FLIC_Model)
 
+FLIC_Model_Coef <- (as.data.frame(FLIC_Model$coefficients))
+FLIC_Model_Coef$Coef <- rownames(FLIC_Model_Coef)
+FLIC_Model_Coef$Model <- rep("FLIC",nrow(FLIC_Model_Coef))
+colnames(FLIC_Model_Coef) <- c("Estimates","Coefficients","Model")
+
 ##################################
 # Computing the model predictions
 ##################################
@@ -942,6 +962,11 @@ BGLM_CP_Model <- bayesglm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCond
 # Consolidating the model results
 ##################################
 summary(BGLM_CP_Model)
+
+BGLM_CP_Model_Coef <- (as.data.frame(BGLM_CP_Model$coefficients))
+BGLM_CP_Model_Coef$Coef <- rownames(BGLM_CP_Model_Coef)
+BGLM_CP_Model_Coef$Model <- rep("BGLM_CP",nrow(BGLM_CP_Model_Coef))
+colnames(BGLM_CP_Model_Coef) <- c("Estimates","Coefficients","Model")
 
 ##################################
 # Computing the model predictions
@@ -1076,6 +1101,11 @@ PLR_R_Model <- glmnet(PLR_R_Predictors,
 ##################################
 summary(PLR_R_Model)
 coef(PLR_R_Model)
+
+PLR_R_Model_Coef <- (as.data.frame(coef(PLR_R_Model)[1:7]))
+PLR_R_Model_Coef$Coef <- rownames(coef(PLR_R_Model))
+PLR_R_Model_Coef$Model <- rep("PLR_R",nrow(PLR_R_Model_Coef))
+colnames(PLR_R_Model_Coef) <- c("Estimates","Coefficients","Model")
 
 ##################################
 # Computing the model predictions
