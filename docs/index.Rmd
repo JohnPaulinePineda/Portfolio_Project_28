@@ -129,7 +129,7 @@ PDA <- UTI_Train
 |
 | **[A]** No missing observations noted for any variable.
 |
-| **[B]** Low variance observed for 2 variables with First.Second.Mode.Ratio>5.
+| **[B]** Low variance observed for 1 variable with First.Second.Mode.Ratio>5.
 |      **[B.1]** <span style="color: #FF0000">Age_24</span> variable (factor)
 |
 | **[C]** Due to the absence of numeric predictors, no low variance with Unique.Count.Ratio<0.01 and high skewness with Skewness>3 or Skewness<(-3) observed for any variable.
