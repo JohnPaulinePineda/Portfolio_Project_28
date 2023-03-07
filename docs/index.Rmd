@@ -446,6 +446,8 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
 
 ###  1.5.1 Logistic Regression (LR)
 |
+| [LR](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
 | **[A]** The logistic regression model from the <mark style="background-color: #CCECFF">**stats**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
 | **[B]** The model does not contain any hyperparameter.
@@ -1440,6 +1442,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 | **[Article]** [Correcting the Quasi-complete Separation Issue in Logistic Regression Models](https://support.sas.com/resources/papers/proceedings16/10220-2016.pdf) by Xinghe Lu
 | **[Article]** [An Introduction to glmnet](https://glmnet.stanford.edu/articles/glmnet.html) by Trevor Hastie, Junyang Qian and Kenneth Tay
 | **[Article]** [Choosing Hyperparameters in Penalized Regression](https://privefl.github.io/blog/choosing-hyper-parameters-in-penalized-regression/) by Florian Prive 
+| **[Publication]** [The Origins of Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) by JS Cramer (Econometrics eJournal)
 | **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
 | **[Publication]** [Dealing with Separation in Logistic Regression Models](https://www.cambridge.org/core/journals/political-analysis/article/abs/dealing-with-separation-in-logistic-regression-models/E2F30195EFFD5F79A9B27ACA5107922F) by Carlisle Rainey (Political Analysis)
 | **[Publication]** [Bias Reduction of Maximum Likelihood Estimates](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) by David Firth (Biometrika)
