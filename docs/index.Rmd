@@ -1059,7 +1059,7 @@ plot(BGLM_CP_Model_Prob_ROC,
 
 ###  1.5.6 Penalized Logistic Regression - Ridge (PLR_R)
 |
-| [PLR_R](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) implements a shrinkage method to deal with infinite estimates by pulling, on average, the original estimates towards zero. PLR_R penalizes the log-likelihood by subtracting a multiple of the sum of the squared coefficients while excluding the intercept from the sum, which is equivalent to penalization using normal prior densities. 
+| [PLR_R](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) implements a shrinkage estimation method to deal with infinite estimates by pulling, on average, the original estimates towards zero. PLR_R penalizes the log-likelihood by subtracting a multiple of the sum of the squared coefficients while excluding the intercept from the sum, which is equivalent to penalization using normal prior densities. 
 |
 | **[A]** The penalized logistic regression - ridge model from the <mark style="background-color: #CCECFF">**glmnet**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
