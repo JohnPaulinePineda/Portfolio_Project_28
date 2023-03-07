@@ -814,6 +814,8 @@ plot(FLAC_Model_Prob_ROC,
 
 ###  1.5.4 Firth's Logistic Regression With Intercept Correction (FLIC)
 |
+| [FLIC](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with intercept correction. The average predicted probabilities in Firth's logistic regression is generally not equal to the observed proportion of events by being pushed towards one-half compared with maximum likelihood estimation. FLIC first applies Firth's logistic regression and then corrects the intercept such that the predicted probabilities become unbiased while keeping all other coefficients constant.
+|
 | **[A]** The Firth's logistic regression with intercept correction model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
 | **[B]** The model contains 1 hyperparameter:
