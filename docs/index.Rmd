@@ -937,6 +937,8 @@ plot(FLIC_Model_Prob_ROC,
 
 ###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLM_CP)
 |
+| [BGLM](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) implements a Bayesian function for generalized linear modelling with independent Cauchy prior distributions inflated by a factor of 2.5 for each coefficient. An approximate expectation-maximization algorithm is applied to update the coefficients at each step using an augmented regression to represent the prior information. 
+|
 | **[A]** The Bayesian generalized linear model with Cauchy priors model from the <mark style="background-color: #CCECFF">**arm**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
 | **[B]** The model does not contain any hyperparameter.
