@@ -568,6 +568,8 @@ plot(LR_Model_Prob_ROC,
 
 ###  1.5.2 Firth's Bias-Reduced Logistic Regression (FBRLR)
 |
+| [FBRLR](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) fits a logistic regression model using Firth's bias reduction method by penalizing the log-likelihood by the Jeffreys prior.
+|
 | **[A]** The Firth's bias-reduced logistic regression model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
 | **[B]** The model contains 1 hyperparameter:
@@ -688,6 +690,8 @@ plot(FBRLR_Model_Prob_ROC,
 ```
 
 ###  1.5.3 Firth's Logistic Regression With Added Covariate (FLAC)
+|
+| [FLAC](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with added covariate. The modified score equations to estimate the coefficients for Firth's logistic regression can be interpreted as score equations for maximum likelihood estimates for an augmented data set. This dataset is created by complementing each original observation with two weighted pseudo-observations with unchanged covariate values. The model attempts to discriminate between the original and pseudo-observations in the alternative formulation of Firth's estimation as an iterative data augmentation procedure.
 |
 | **[A]** The Firth's logistic regression with added covariate model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
