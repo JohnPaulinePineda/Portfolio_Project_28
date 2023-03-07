@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 |
 | This document presents a non-exhaustive list of robust model variants applied to handle quasi-complete or complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>.    
 |
-| Quasi-separation or complete separation is a monotone likelihood phenomenon observed in the fitting process of a logistic regression model when the likelihood converges while at least one parameter estimate diverges to positive or negative infinity. The algorithms applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**logistf**</mark> and <mark style="background-color: #CCECFF">**arm**</mark> packages) attempt to reduce the bias of the maximum likelihood estimates through penalization, producing finite parameter estimates in the process.
+| Quasi-complete or complete separation is a monotone likelihood phenomenon observed in the fitting process of a logistic regression model when the likelihood converges while at least one parameter estimate diverges to positive or negative infinity. The algorithms applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**logistf**</mark> and <mark style="background-color: #CCECFF">**arm**</mark> packages) attempt to reduce the bias of the maximum likelihood estimates through penalization, producing finite parameter estimates in the process.
 |
 ##  1.1 Sample Data
 |
