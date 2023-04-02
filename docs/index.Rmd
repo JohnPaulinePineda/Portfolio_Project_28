@@ -446,7 +446,7 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
 
 ###  1.5.1 Logistic Regression (LR)
 |
-| [LR](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
 |
 | **[A]** The logistic regression model from the <mark style="background-color: #CCECFF">**stats**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
@@ -568,7 +568,7 @@ plot(LR_Model_Prob_ROC,
 
 ###  1.5.2 Firth's Bias-Reduced Logistic Regression (FBRLR)
 |
-| [FBRLR](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) fits a logistic regression model using Firth's bias reduction method by penalizing the log-likelihood by the Jeffreys prior.
+| [Firth's Bias-Reduced Logistic Regression](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) fits a logistic regression model using Firth's bias reduction method by penalizing the log-likelihood by the Jeffreys prior.
 |
 | **[A]** The Firth's bias-reduced logistic regression model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
@@ -691,7 +691,7 @@ plot(FBRLR_Model_Prob_ROC,
 
 ###  1.5.3 Firth's Logistic Regression With Added Covariate (FLAC)
 |
-| [FLAC](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with added covariate. The modified score equations to estimate the coefficients for Firth's logistic regression can be interpreted as score equations for maximum likelihood estimates for an augmented data set. This dataset is created by complementing each original observation with two weighted pseudo-observations with unchanged covariate values. The model attempts to discriminate between the original and pseudo-observations in the alternative formulation of Firth's estimation as an iterative data augmentation procedure.
+| [Firth's Logistic Regression With Added Covariate](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with the addition of covariates. The modified score equations to estimate the coefficients for Firth's logistic regression can be interpreted as score equations for maximum likelihood estimates for an augmented data set. This dataset is created by complementing each original observation with two weighted pseudo-observations with unchanged covariate values. The model attempts to discriminate between the original and pseudo-observations in the alternative formulation of Firth's estimation as an iterative data augmentation procedure.
 |
 | **[A]** The Firth's logistic regression with added covariate model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
@@ -814,7 +814,7 @@ plot(FLAC_Model_Prob_ROC,
 
 ###  1.5.4 Firth's Logistic Regression With Intercept Correction (FLIC)
 |
-| [FLIC](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with intercept correction. The average predicted probabilities in Firth's logistic regression is generally not equal to the observed proportion of events by being pushed towards one-half compared with maximum likelihood estimation. FLIC first applies Firth's logistic regression and then corrects the intercept such that the predicted probabilities become unbiased while keeping all other coefficients constant.
+| [Firth's Logistic Regression With Intercept Correction](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression by applying corrections on the intercept. The average predicted probabilities in Firth's logistic regression is generally not equal to the observed proportion of events by being pushed towards one-half compared with maximum likelihood estimation. FLIC first applies Firth's logistic regression and then corrects the intercept such that the predicted probabilities become unbiased while keeping all other coefficients constant.
 |
 | **[A]** The Firth's logistic regression with intercept correction model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
@@ -937,7 +937,7 @@ plot(FLIC_Model_Prob_ROC,
 
 ###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLM_CP)
 |
-| [BGLM](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) implements a Bayesian function for generalized linear modelling with independent Cauchy prior distributions inflated by a factor of 2.5 for each coefficient. An approximate expectation-maximization algorithm is applied to update the coefficients at each step using an augmented regression to represent the prior information. 
+| [Bayesian Generalized Linear Model With Cauchy Priors](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) implements a Bayesian function for generalized linear modelling with independent Cauchy prior distributions inflated by a factor of 2.5 for each coefficient. An approximate expectation-maximization algorithm is applied to update the coefficients at each step using an augmented regression to represent the prior information. 
 |
 | **[A]** The Bayesian generalized linear model with Cauchy priors model from the <mark style="background-color: #CCECFF">**arm**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
@@ -1059,7 +1059,7 @@ plot(BGLM_CP_Model_Prob_ROC,
 
 ###  1.5.6 Penalized Logistic Regression - Ridge (PLR_R)
 |
-| [PLR_R](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) implements a shrinkage estimation method to deal with infinite estimates by pulling, on average, the original estimates towards zero. PLR_R penalizes the log-likelihood by subtracting a multiple of the sum of the squared coefficients while excluding the intercept from the sum, which is equivalent to penalization using normal prior densities. 
+| [Ridge Penalized Logistic Regression](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) implements a shrinkage estimation method to deal with infinite estimates by pulling, on average, the original estimates towards zero. The algorithm penalizes the log-likelihood by subtracting a multiple of the sum of the squared coefficients while excluding the intercept from the sum, which is equivalent to penalization using normal prior densities. 
 |
 | **[A]** The penalized logistic regression - ridge model from the <mark style="background-color: #CCECFF">**glmnet**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
 |
