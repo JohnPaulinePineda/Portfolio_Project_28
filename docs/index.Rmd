@@ -1207,10 +1207,10 @@ plot(PLR_R_Model_Prob_ROC,
 | Model estimation comparison:
 |
 | **[A]** The robust logistic regression models which were able to sufficiently compensate for the quasi-complete condition through stable coefficient estimates and standard errors, including valid logistic profiles with reasonably distributed predicted points are the following :
-|      **[A.1]** FBRLR : Firth’s Bias-Reduced Logistic Regression (<mark style="background-color: #CCECFF">**logistf**</mark> package)
-|      **[A.2]** FLAC : Firth’s Logistic Regression With Added Covariate (<mark style="background-color: #CCECFF">**logistf**</mark> package)
-|      **[A.3]** FLIC : Firth’s Logistic Regression With Intercept Correction (<mark style="background-color: #CCECFF">**logistf**</mark> package)
-|      **[A.4]** BGLM_CP : Bayesian Generalized Linear Model With Cauchy Priors (<mark style="background-color: #CCECFF">**arm**</mark> package)
+|      **[A.1]** **FBRLR : Firth’s Bias-Reduced Logistic Regression** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.2]** **FLAC : Firth’s Logistic Regression With Added Covariate** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.3]** **FLIC : Firth’s Logistic Regression With Intercept Correction** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.4]** **BGLM_CP : Bayesian Generalized Linear Model With Cauchy Priors** (<mark style="background-color: #CCECFF">**arm**</mark> package)
 |
 ```{r section_1.6, warning=FALSE, message=FALSE}
 ##################################
