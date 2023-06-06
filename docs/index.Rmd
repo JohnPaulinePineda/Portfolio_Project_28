@@ -124,7 +124,7 @@ PDA <- UTI_Train
   row.names=NULL)
 )
 ```
-
+</div>
 ##  1.2 Data Quality Assessment
 |
 | Data quality assessment:
