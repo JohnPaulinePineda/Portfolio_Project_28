@@ -14,6 +14,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 ```
+
 # **1. Table of Contents**
 |
 | This project explores different robust alternatives for handling quasi-complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Methods applied in the analysis to evaluate a quasi-complete condition when a covariate almost perfectly predicts the outcome included the **Firth’s Bias-Reduced Logistic Regression**, **Firth’s Logistic Regression With Added Covariate**, **Firth’s Logistic Regression With Intercept Correction**, **Bayesian Generalized Linear Model With Cauchy Priors** and **Ridge-Penalized Logistic Regression** algorithms. The resulting predictions derived from the candidate models were evaluated in terms of the stability of their coefficient estimates and standard errors, including the validity of their logistic profiles and the distribution of their predicted points, which were all compared to that of the baseline model without any form of quasi-complete separation treatment.
@@ -124,7 +125,7 @@ PDA <- UTI_Train
   row.names=NULL)
 )
 ```
-</div>
+
 ##  1.2 Data Quality Assessment
 |
 | Data quality assessment:
