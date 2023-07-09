@@ -1,5 +1,5 @@
 ---
-title: "R : Exploring Robust Logistic Regression Models for Handling Quasi-Complete Separation"
+title: "Supervised Learning : Exploring Robust Logistic Regression Models for Handling Quasi-Complete Separation"
 author: "John Pauline Pineda"
 date: "February 19, 2023"
 output: 
