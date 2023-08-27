@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 
 # **1. Table of Contents**
 |
-| This project explores different robust alternatives for handling quasi-complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Methods applied in the analysis to evaluate a quasi-complete condition when a covariate almost perfectly predicts the outcome included the **Firth’s Bias-Reduced Logistic Regression**, **Firth’s Logistic Regression With Added Covariate**, **Firth’s Logistic Regression With Intercept Correction**, **Bayesian Generalized Linear Model With Cauchy Priors** and **Ridge-Penalized Logistic Regression** algorithms. The resulting predictions derived from the candidate models were evaluated in terms of the stability of their coefficient estimates and standard errors, including the validity of their logistic profiles and the distribution of their predicted points, which were all compared to that of the baseline model without any form of quasi-complete separation treatment.
+| This project explores different robust alternatives for handling quasi-complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Methods applied in the analysis to evaluate a quasi-complete condition when a covariate almost perfectly predicts the outcome included the **Firth’s Bias-Reduced Logistic Regression**, **Firth’s Logistic Regression With Added Covariate**, **Firth’s Logistic Regression With Intercept Correction**, **Bayesian Generalized Linear Model With Cauchy Priors** and **Ridge-Penalized Logistic Regression** algorithms. The resulting predictions derived from the candidate models were evaluated in terms of the stability of their coefficient estimates and standard errors, including the validity of their logistic profiles and the distribution of their predicted points, which were all compared to that of the baseline model without any form of quasi-complete separation treatment. All results were consolidated in a [<span style="color: #FF0000">**Summary**</span>](#summary) presented at the end of the document.
 |
 | Quasi-complete or complete separation is a monotone likelihood phenomenon observed in the fitting process of a logistic regression model when the likelihood converges while at least one parameter estimate diverges to positive or negative infinity. The algorithms applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**logistf**</mark> and <mark style="background-color: #CCECFF">**arm**</mark> packages) attempt to reduce the bias of the maximum likelihood estimates through penalization, producing finite parameter estimates in the process.
 |
@@ -132,8 +132,6 @@ PDA <- UTI_Train
 </details>
 
 ##  1.2 Data Quality Assessment
-|
-| Data quality assessment:
 |
 | **[A]** No missing observations noted for any variable.
 |
@@ -369,8 +367,6 @@ if (length(names(DQA.Predictors.Numeric))==0) {
 
 ###  1.3.1 Pre-Processed Dataset
 |
-| Preliminary dataset assessment:
-|
 | **[A]** 239 rows (observations)
 |      **[A.1]** Train Set = 239 observations
 | 
@@ -409,8 +405,6 @@ dim(PMA_PreModelling_Train)
 </details>
 
 ## 1.4 Data Exploration
-|
-| Exploratory data analysis:
 |
 | **[A]** Several factor variables demonstrated differential relationships with the <span style="color: #FF0000">UTI</span> response variable:
 |      **[A.1]** <span style="color: #FF0000">Diaphragm</span> variable (factor)
@@ -1260,9 +1254,7 @@ plot(PLR_R_Model_Prob_ROC,
 
 </details>
 
-##  1.6 Probability Curve and Coefficient Estimation Evaluation Summary
-|
-| Model estimation comparison:
+##  1.6 Consolidated Findings
 |
 | **[A]** The robust logistic regression models which were able to sufficiently compensate for the quasi-complete condition through stable coefficient estimates and standard errors, including valid logistic profiles with reasonably distributed predicted points are the following :
 |      **[A.1]** **FBRLR : Firth’s Bias-Reduced Logistic Regression** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
@@ -1454,8 +1446,12 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 ```
 
 </details>
-
-# **2. References**
+|
+# **2. Summary** <a name="summary"></a>
+|
+| ![](D:/Github_Codes/ProjectPortfolio/Portfolio_Project_28/docs/Project28_Summary.png)
+|
+# **3. References**
 |
 | **[Book]** [Applied Predictive Modeling](http://appliedpredictivemodeling.com/) by Max Kuhn and Kjell Johnson
 | **[Book]** [An Introduction to Statistical Learning](https://www.statlearning.com/) by Gareth James, Daniela Witten, Trevor Hastie and Rob Tibshirani
