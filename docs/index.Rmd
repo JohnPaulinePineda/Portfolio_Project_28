@@ -11,6 +11,8 @@ output:
     css: doc.css
 ---
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
 ```
