@@ -1,0 +1,1530 @@
+---
+title: "Supervised Learning : Exploring Robust Logistic Regression Models for Handling Quasi-Complete Separation"
+author: "John Pauline Pineda"
+date: "February 19, 2023"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: readable
+    highlight: tango
+    css: doc.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width=15, fig.height=10)
+```
+
+# **1. Table of Contents**
+|
+| This project explores different robust alternatives for handling quasi-complete separation during logistic regression modelling using various helpful packages in <mark style="background-color: #CCECFF">**R**</mark>. Methods applied in the analysis to evaluate a quasi-complete condition when a covariate almost perfectly predicts the outcome included the **Firth’s Bias-Reduced Logistic Regression**, **Firth’s Logistic Regression With Added Covariate**, **Firth’s Logistic Regression With Intercept Correction**, **Bayesian Generalized Linear Model With Cauchy Priors** and **Ridge-Penalized Logistic Regression** algorithms. The resulting predictions derived from the candidate models were evaluated in terms of the stability of their coefficient estimates and standard errors, including the validity of their logistic profiles and the distribution of their predicted points, which were all compared to that of the baseline model without any form of quasi-complete separation treatment. All results were consolidated in a [<span style="color: #FF0000">**Summary**</span>](#summary) presented at the end of the document.
+|
+| Quasi-complete or complete separation is a monotone likelihood phenomenon observed in the fitting process of a logistic regression model when the likelihood converges while at least one parameter estimate diverges to positive or negative infinity. The algorithms applied in this study (mostly contained in the <mark style="background-color: #CCECFF">**logistf**</mark> and <mark style="background-color: #CCECFF">**arm**</mark> packages) attempt to reduce the bias of the maximum likelihood estimates through penalization, producing finite parameter estimates in the process.
+|
+##  1.1 Sample Data
+|
+| The <mark style="background-color: #EEEEEE;color: #FF0000">**sex2**</mark>  dataset from the  <mark style="background-color: #CCECFF">**logistf**</mark> package was used for this illustrated example. One of the original categorical predictors was transformed to better simulate a quasi-complete condition when a covariate almost perfectly predicts the outcome.
+|
+| Preliminary dataset assessment:
+|
+| **[A]** 239 rows (observations)
+|      **[A.1]** Train Set = 239 observations
+| 
+| **[B]** 7 columns (variables)
+|      **[B.1]** 1/7 response = <span style="color: #FF0000">UTI</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">UTI=No</span> < <span style="color: #FF0000">UTI=Yes</span>
+|      **[B.2]** 6/7 predictors = All remaining variables (6/6 factor)
+|     
+| 
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.1, warning=FALSE, message=FALSE}
+##################################
+# Loading R libraries
+##################################
+library(AppliedPredictiveModeling)
+library(caret)
+library(rpart)
+library(lattice)
+library(dplyr)
+library(tidyr)
+library(moments)
+library(skimr)
+library(RANN)
+library(pls)
+library(corrplot)
+library(tidyverse)
+library(lares)
+library(DMwR)
+library(gridExtra)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(stats)
+library(nnet)
+library(elasticnet)
+library(earth)
+library(party)
+library(kernlab)
+library(randomForest)
+library(Cubist)
+library(pROC)
+library(mda)
+library(klaR)
+library(pamr)
+library(OptimalCutpoints)
+library(broom)
+library(PRROC)
+library(ggpubr)
+library(Hmisc)
+library(logistf)
+library(arm)
+library(glmnet)
+
+##################################
+# Loading source and
+# formulating the train set
+##################################
+data(sex2)
+sex2$dia <- sex2$case
+sex2$dia[1] <- 0
+UTI_Train <- as.data.frame(sex2)
+
+##################################
+# Applying verbose descriptions
+# for the response and predictor variables
+##################################
+colnames(UTI_Train) <- c("UTI",
+                         "Age_24",
+                         "Contraceptive",
+                         "Condom",
+                         "LubricatedCondom",
+                         "Spermicide",
+                         "Diaphragm")
+
+UTI <- UTI_Train
+
+UTI_Train <- lapply(UTI_Train, function(x) ifelse(x==1,"Yes","No"))
+UTI_Train <- lapply(UTI_Train, function(x) as.factor(as.character(x)))
+UTI_Train <- as.data.frame(UTI_Train)
+
+##################################
+# Performing a general exploration of the train set
+##################################
+dim(UTI_Train)
+str(UTI_Train)
+summary(UTI_Train)
+describe(UTI_Train)
+
+##################################
+# Formulating a data type assessment summary
+##################################
+PDA <- UTI_Train
+(PDA.Summary <- data.frame(
+  Column.Index=c(1:length(names(PDA))),
+  Column.Name= names(PDA),
+  Column.Type=sapply(PDA, function(x) class(x)),
+  row.names=NULL)
+)
+```
+
+</details>
+
+##  1.2 Data Quality Assessment
+|
+| **[A]** No missing observations noted for any variable.
+|
+| **[B]** Low variance observed for 1 variable with First.Second.Mode.Ratio>5.
+|      **[B.1]** <span style="color: #FF0000">Age_24</span> variable (factor)
+|
+| **[C]** Due to the absence of numeric predictors, no low variance with Unique.Count.Ratio<0.01 and high skewness with Skewness>3 or Skewness<(-3) observed for any variable.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.2, warning=FALSE, message=FALSE}
+##################################
+# Loading dataset
+##################################
+DQA <- UTI_Train
+
+##################################
+# Formulating an overall data quality assessment summary
+##################################
+(DQA.Summary <- data.frame(
+  Column.Index=c(1:length(names(DQA))),
+  Column.Name= names(DQA),
+  Column.Type=sapply(DQA, function(x) class(x)),
+  Row.Count=sapply(DQA, function(x) nrow(DQA)),
+  NA.Count=sapply(DQA,function(x)sum(is.na(x))),
+  Fill.Rate=sapply(DQA,function(x)format(round((sum(!is.na(x))/nrow(DQA)),3),nsmall=3)),
+  row.names=NULL)
+)
+
+##################################
+# Listing all predictors
+##################################
+DQA.Predictors <- DQA[,!names(DQA) %in% c("UTI")]
+
+##################################
+# Listing all numeric predictors
+##################################
+DQA.Predictors.Numeric <- DQA.Predictors[,sapply(DQA.Predictors, is.numeric)]
+
+if (length(names(DQA.Predictors.Numeric))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Numeric))),
+               " numeric predictor variable(s)."))
+} else {
+  print("There are no numeric predictor variables.")
+}
+
+##################################
+# Listing all factor predictors
+##################################
+DQA.Predictors.Factor <- DQA.Predictors[,sapply(DQA.Predictors, is.factor)]
+
+if (length(names(DQA.Predictors.Factor))>0) {
+    print(paste0("There are ",
+               (length(names(DQA.Predictors.Factor))),
+               " factor predictor variable(s)."))
+} else {
+  print("There are no factor predictor variables.")
+}
+
+##################################
+# Formulating a data quality assessment summary for factor predictors
+##################################
+if (length(names(DQA.Predictors.Factor))>0) {
+
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = x[!(x %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return("x"),
+           return(usm[tabsm == max(tabsm)]))
+  }
+
+  (DQA.Predictors.Factor.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Factor),
+  Column.Type=sapply(DQA.Predictors.Factor, function(x) class(x)),
+  Unique.Count=sapply(DQA.Predictors.Factor, function(x) length(unique(x))),
+  First.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(FirstModes(x)[1])),
+  Second.Mode.Value=sapply(DQA.Predictors.Factor, function(x) as.character(SecondModes(x)[1])),
+  First.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Factor, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Factor)),3), nsmall=3)),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Factor, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  row.names=NULL)
+  )
+
+}
+
+##################################
+# Formulating a data quality assessment summary for numeric predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))>0) {
+
+  ##################################
+  # Formulating a function to determine the first mode
+  ##################################
+  FirstModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    ux[tab == max(tab)]
+  }
+
+  ##################################
+  # Formulating a function to determine the second mode
+  ##################################
+  SecondModes <- function(x) {
+    ux <- unique(na.omit(x))
+    tab <- tabulate(match(x, ux))
+    fm = ux[tab == max(tab)]
+    sm = na.omit(x)[!(na.omit(x) %in% fm)]
+    usm <- unique(sm)
+    tabsm <- tabulate(match(sm, usm))
+    ifelse(is.na(usm[tabsm == max(tabsm)])==TRUE,
+           return(0.00001),
+           return(usm[tabsm == max(tabsm)]))
+  }
+
+  (DQA.Predictors.Numeric.Summary <- data.frame(
+  Column.Name= names(DQA.Predictors.Numeric),
+  Column.Type=sapply(DQA.Predictors.Numeric, function(x) class(x)),
+  Unique.Count=sapply(DQA.Predictors.Numeric, function(x) length(unique(x))),
+  Unique.Count.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((length(unique(x))/nrow(DQA.Predictors.Numeric)),3), nsmall=3)),
+  First.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((FirstModes(x)[1]),3),nsmall=3)),
+  Second.Mode.Value=sapply(DQA.Predictors.Numeric, function(x) format(round((SecondModes(x)[1]),3),nsmall=3)),
+  First.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == FirstModes(x)[1])),
+  Second.Mode.Count=sapply(DQA.Predictors.Numeric, function(x) sum(na.omit(x) == SecondModes(x)[1])),
+  First.Second.Mode.Ratio=sapply(DQA.Predictors.Numeric, function(x) format(round((sum(na.omit(x) == FirstModes(x)[1])/sum(na.omit(x) == SecondModes(x)[1])),3), nsmall=3)),
+  Minimum=sapply(DQA.Predictors.Numeric, function(x) format(round(min(x,na.rm = TRUE),3), nsmall=3)),
+  Mean=sapply(DQA.Predictors.Numeric, function(x) format(round(mean(x,na.rm = TRUE),3), nsmall=3)),
+  Median=sapply(DQA.Predictors.Numeric, function(x) format(round(median(x,na.rm = TRUE),3), nsmall=3)),
+  Maximum=sapply(DQA.Predictors.Numeric, function(x) format(round(max(x,na.rm = TRUE),3), nsmall=3)),
+  Skewness=sapply(DQA.Predictors.Numeric, function(x) format(round(skewness(x,na.rm = TRUE),3), nsmall=3)),
+  Kurtosis=sapply(DQA.Predictors.Numeric, function(x) format(round(kurtosis(x,na.rm = TRUE),3), nsmall=3)),
+  Percentile25th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.25,na.rm = TRUE),3), nsmall=3)),
+  Percentile75th=sapply(DQA.Predictors.Numeric, function(x) format(round(quantile(x,probs=0.75,na.rm = TRUE),3), nsmall=3)),
+  row.names=NULL)
+  )
+
+}
+
+##################################
+# Identifying potential data quality issues
+##################################
+
+##################################
+# Checking for missing observations
+##################################
+if ((nrow(DQA.Summary[DQA.Summary$NA.Count>0,]))>0){
+  print(paste0("Missing observations noted for ",
+               (nrow(DQA.Summary[DQA.Summary$NA.Count>0,])),
+               " variable(s) with NA.Count>0 and Fill.Rate<1.0."))
+  DQA.Summary[DQA.Summary$NA.Count>0,]
+} else {
+  print("No missing observations noted.")
+}
+
+##################################
+# Checking for zero or near-zero variance predictors
+##################################
+if (length(names(DQA.Predictors.Factor))==0) {
+  print("No factor predictors noted.")
+} else if (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,])),
+               " factor variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Factor.Summary[as.numeric(as.character(DQA.Predictors.Factor.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance factor predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,])),
+               " numeric variable(s) with First.Second.Mode.Ratio>5."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$First.Second.Mode.Ratio))>5,]
+} else {
+  print("No low variance numeric predictors due to high first-second mode ratio noted.")
+}
+
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])>0){
+  print(paste0("Low variance observed for ",
+               (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,])),
+               " numeric variable(s) with Unique.Count.Ratio<0.01."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Unique.Count.Ratio))<0.01,]
+} else {
+  print("No low variance numeric predictors due to low unique count ratio noted.")
+}
+
+##################################
+# Checking for skewed predictors
+##################################
+if (length(names(DQA.Predictors.Numeric))==0) {
+  print("No numeric predictors noted.")
+} else if (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])>0){
+  print(paste0("High skewness observed for ",
+  (nrow(DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                               as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),])),
+  " numeric variable(s) with Skewness>3 or Skewness<(-3)."))
+  DQA.Predictors.Numeric.Summary[as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))>3 |
+                                 as.numeric(as.character(DQA.Predictors.Numeric.Summary$Skewness))<(-3),]
+} else {
+  print("No skewed numeric predictors noted.")
+}
+
+```
+
+</details>
+
+##  1.3 Data Preprocessing
+
+###  1.3.1 Pre-Processed Dataset
+|
+| **[A]** 239 rows (observations)
+|      **[A.1]** Train Set = 239 observations
+| 
+| **[B]** 7 columns (variables)
+|      **[B.1]** 1/7 response = <span style="color: #FF0000">UTI</span> variable (factor)
+|             **[B.1.1]** Levels = <span style="color: #FF0000">UTI=No</span> < <span style="color: #FF0000">UTI=Yes</span>
+|      **[B.2]** 6/7 predictors = All remaining variables (6/6 factor)
+| 
+| **[C]** Pre-processing actions applied:
+|      **[C.1]** Due to the objective of simulating a quasi-complete separation, the predictor observed with near-zero variance was not removed in the analysis 
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.3.1, warning=FALSE, message=FALSE}
+##################################
+# Creating the pre-modelling
+# train set
+##################################
+PMA_PreModelling_Train <- UTI_Train
+
+##################################
+# Gathering descriptive statistics
+##################################
+(PMA_PreModelling_Train_Skimmed <- skim(PMA_PreModelling_Train))
+
+###################################
+# Verifying the data dimensions
+# for the train set
+###################################
+dim(PMA_PreModelling_Train)
+
+```
+
+</details>
+
+## 1.4 Data Exploration
+|
+| **[A]** Several factor variables demonstrated differential relationships with the <span style="color: #FF0000">UTI</span> response variable:
+|      **[A.1]** <span style="color: #FF0000">Diaphragm</span> variable (factor)
+|      **[A.2]** <span style="color: #FF0000">Age_24</span> variable (factor)
+|      **[A.3]** <span style="color: #FF0000">Spermicide</span> variable (factor)
+|      **[A.4]** <span style="color: #FF0000">LubricatedCondom</span> variable (factor)
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.4, warning=FALSE, message=FALSE}
+##################################
+# Restructuring the dataset for
+# for barchart analysis
+##################################
+EDA.Bar.Source <- PMA_PreModelling_Train
+
+##################################
+# Creating a function to formulate
+# the proportions table
+##################################
+EDA.PropTable.Function <- function(FactorVar) {
+  EDA.Bar.Source.FactorVar <- EDA.Bar.Source[,c("UTI",
+                                                FactorVar)]
+  EDA.Bar.Source.FactorVar.Prop <- as.data.frame(prop.table(table(EDA.Bar.Source.FactorVar), 2))
+  names(EDA.Bar.Source.FactorVar.Prop)[2] <- "UTI"
+  EDA.Bar.Source.FactorVar.Prop$Variable <- rep(FactorVar,nrow(EDA.Bar.Source.FactorVar.Prop))
+
+  return(EDA.Bar.Source.FactorVar.Prop)
+
+}
+
+EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
+                                       EDA.PropTable.Function("Contraceptive"),
+                                       EDA.PropTable.Function("Condom"),
+                                       EDA.PropTable.Function("LubricatedCondom"),
+                                       EDA.PropTable.Function("Spermicide"),
+                                       EDA.PropTable.Function("Diaphragm"))
+
+(EDA.Barchart.FactorVar <- barchart(EDA.Bar.Source.FactorVar.Prop[,3] ~
+                                      EDA.Bar.Source.FactorVar.Prop[,2] | EDA.Bar.Source.FactorVar.Prop[,4],
+                                      data=EDA.Bar.Source.FactorVar.Prop,
+                                      groups = EDA.Bar.Source.FactorVar.Prop[,1],
+                                      stack=TRUE,
+                                      ylab = "Proportion",
+                                      xlab = "UTI",
+                                      auto.key = list(adj = 1),
+                                      layout=(c(3,2))))
+
+```
+
+</details>
+
+## 1.5 Predictive Model Index Development and Probability Curve Estimation
+
+###  1.5.1 Logistic Regression (LR)
+|
+| [Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) models the relationship between the probability of an event (among two outcome levels) by having the log-odds of the event be a linear combination of a set of predictors weighted by their respective parameter estimates. The parameters are estimated via maximum likelihood estimation by testing different values through multiple iterations to optimize for the best fit of log odds. All of these iterations produce the log likelihood function, and logistic regression seeks to maximize this function to find the best parameter estimates. Given the optimal parameters, the conditional probabilities for each observation can be calculated, logged, and summed together to yield a predicted probability.
+|
+| **[A]** The logistic regression model from the <mark style="background-color: #CCECFF">**stats**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The model was not able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in the hyper-inflation of its estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -2.868 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.052
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -21.885
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -22.120 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.687
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +2.868
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +71.283
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a non-logistic profile with predicted points clustered in groups.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration is fixed due to the absence of a hyperparameter.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were practically dichotomized into a limited set of values. 
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.1, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_LR <- UTI
+
+##################################
+# Formulating the structure of the
+# Logistic Regression model
+##################################
+LR_Model <- glm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                data = PMA_PreModelling_Train_LR,
+                family = binomial)
+
+##################################
+# Consolidating the model results
+##################################
+summary(LR_Model)
+
+LR_Model_Coef <- (as.data.frame(LR_Model$coefficients))
+LR_Model_Coef$Coef <- rownames(LR_Model_Coef)
+LR_Model_Coef$Model <- rep("LR",nrow(LR_Model_Coef))
+colnames(LR_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(LR_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(LR_Model_Probabilities <- predict(LR_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(LR_Model_Indices <- predict(LR_Model, 
+                           type = c("link")))
+max(LR_Model_Indices)
+min(LR_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+LR_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_LR)
+LR_Model_Predictions$LR_Prob <- LR_Model_Probabilities
+LR_Model_Predictions$LR_LP <- LR_Model_Indices
+LR_Model_Predictions$UTI <- as.factor(LR_Model_Predictions$UTI)
+LR_Model_Predictions$Label <- rep("LR",nrow(LR_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+LR_Model_Predictions %>%
+  ggplot(aes(x = LR_LP ,
+             y = LR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Logistic Regression") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+LR_Prob_Low  <- LR_Model_Predictions[LR_Model_Predictions$UTI==0,
+                                    c("LR_Prob")]
+LR_Prob_High <- LR_Model_Predictions[LR_Model_Predictions$UTI==1,
+                                    c("LR_Prob")]
+LR_Model_Prob_ROC <- roc.curve(scores.class1 = LR_Prob_Low,
+                               scores.class0 = LR_Prob_High,
+                                curve = TRUE)
+
+plot(LR_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Logistic Regression", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+###  1.5.2 Firth's Bias-Reduced Logistic Regression (FBRLR)
+|
+| [Firth's Bias-Reduced Logistic Regression](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) fits a logistic regression model using Firth's bias reduction method by penalizing the log-likelihood by the Jeffreys prior.
+|
+| **[A]** The Firth's bias-reduced logistic regression model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.345 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.539
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.014
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -2.048 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.214
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +3.019
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves maxit=1000.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.2, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_FBRLR <- UTI
+
+##################################
+# Formulating the structure of the 
+# Firth's Bias-Reduced Logistic Regression model
+##################################
+FBRLR_Model <- logistf(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_FBRLR,
+                       control=logistf.control(maxit = 10000))
+
+##################################
+# Consolidating the model results
+##################################
+summary(FBRLR_Model)
+
+FBRLR_Model_Coef <- (as.data.frame(FBRLR_Model$coefficients))
+FBRLR_Model_Coef$Coef <- rownames(FBRLR_Model_Coef)
+FBRLR_Model_Coef$Model <- rep("FBRLR",nrow(FBRLR_Model_Coef))
+colnames(FBRLR_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FBRLR_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(FBRLR_Model_Probabilities <- predict(FBRLR_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(FBRLR_Model_Indices <- predict(FBRLR_Model, 
+                           type = c("link")))
+max(FBRLR_Model_Indices)
+min(FBRLR_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+FBRLR_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FBRLR)
+FBRLR_Model_Predictions$FBRLR_Prob <- FBRLR_Model_Probabilities
+FBRLR_Model_Predictions$FBRLR_LP <- FBRLR_Model_Indices
+FBRLR_Model_Predictions$UTI <- as.factor(FBRLR_Model_Predictions$UTI)
+FBRLR_Model_Predictions$Label <- rep("FBRLR",nrow(FBRLR_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+FBRLR_Model_Predictions %>%
+  ggplot(aes(x = FBRLR_LP ,
+             y = FBRLR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Bias-Reduced Logistic Regression") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+FBRLR_Prob_Low  <- FBRLR_Model_Predictions[FBRLR_Model_Predictions$UTI==0,
+                                    c("FBRLR_Prob")]
+FBRLR_Prob_High <- FBRLR_Model_Predictions[FBRLR_Model_Predictions$UTI==1,
+                                    c("FBRLR_Prob")]
+FBRLR_Model_Prob_ROC <- roc.curve(scores.class1 = FBRLR_Prob_Low,
+                               scores.class0 = FBRLR_Prob_High,
+                                curve = TRUE)
+
+plot(FBRLR_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Firth's Bias-Reduced Logistic Regression", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+###  1.5.3 Firth's Logistic Regression With Added Covariate (FLAC)
+|
+| [Firth's Logistic Regression With Added Covariate](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression with the addition of covariates. The modified score equations to estimate the coefficients for Firth's logistic regression can be interpreted as score equations for maximum likelihood estimates for an augmented data set. This dataset is created by complementing each original observation with two weighted pseudo-observations with unchanged covariate values. The model attempts to discriminate between the original and pseudo-observations in the alternative formulation of Firth's estimation as an iterative data augmentation procedure.
+|
+| **[A]** The Firth's logistic regression with added covariate model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.302 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.487
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.042
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -2.115 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.231
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +3.115
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +10.507
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves maxit=1000.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.3, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_FLAC <- UTI
+
+##################################
+# Formulating the structure of the
+# Firth's Logistic Regression With Added Covariate model
+##################################
+FLAC_Model <- flac(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_FLAC,
+                       control=logistf.control(maxit = 10000))
+
+##################################
+# Consolidating the model results
+##################################
+summary(FLAC_Model)
+
+FLAC_Model_Coef <- (as.data.frame(FLAC_Model$coefficients))
+FLAC_Model_Coef$Coef <- rownames(FLAC_Model_Coef)
+FLAC_Model_Coef$Model <- rep("FLAC",nrow(FLAC_Model_Coef))
+colnames(FLAC_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FLAC_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(FLAC_Model_Probabilities <- predict(FLAC_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(FLAC_Model_Indices <- predict(FLAC_Model, 
+                           type = c("link")))
+max(FLAC_Model_Indices)
+min(FLAC_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+FLAC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLAC)
+FLAC_Model_Predictions$FLAC_Prob <- FLAC_Model_Probabilities
+FLAC_Model_Predictions$FLAC_LP <- FLAC_Model_Indices
+FLAC_Model_Predictions$UTI <- as.factor(FLAC_Model_Predictions$UTI)
+FLAC_Model_Predictions$Label <- rep("FLAC",nrow(FLAC_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+FLAC_Model_Predictions %>%
+  ggplot(aes(x = FLAC_LP ,
+             y = FLAC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Added Covariate") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+FLAC_Prob_Low  <- FLAC_Model_Predictions[FLAC_Model_Predictions$UTI==0,
+                                    c("FLAC_Prob")]
+FLAC_Prob_High <- FLAC_Model_Predictions[FLAC_Model_Predictions$UTI==1,
+                                    c("FLAC_Prob")]
+FLAC_Model_Prob_ROC <- roc.curve(scores.class1 = FLAC_Prob_Low,
+                               scores.class0 = FLAC_Prob_High,
+                                curve = TRUE)
+
+plot(FLAC_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Firth's Logistic Regression With Added Covariate", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+###  1.5.4 Firth's Logistic Regression With Intercept Correction (FLIC)
+|
+| [Firth's Logistic Regression With Intercept Correction](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) implements Firth's bias-reduced penalized-likelihood logistic regression by applying corrections on the intercept. The average predicted probabilities in Firth's logistic regression is generally not equal to the observed proportion of events by being pushed towards one-half compared with maximum likelihood estimation. FLIC first applies Firth's logistic regression and then corrects the intercept such that the predicted probabilities become unbiased while keeping all other coefficients constant.
+|
+| **[A]** The Firth's logistic regression with intercept correction model from the <mark style="background-color: #CCECFF">**logistf**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">maxit</span> = maximum number of iterations for the penalized-likelihood logistic regression held constant at a value of 1000
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.274 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -1.539
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.014
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -2.048 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.214
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +3.019
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +10.409
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves maxit=1000.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.4, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_FLIC <- UTI
+
+##################################
+# Formulating the structure of the
+# Firth's Logistic Regression With Intercept Correction model
+##################################
+FLIC_Model <- flic(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_FLIC,
+                       control=logistf.control(maxit = 10000))
+
+##################################
+# Consolidating the model results
+##################################
+summary(FLIC_Model)
+
+FLIC_Model_Coef <- (as.data.frame(FLIC_Model$coefficients))
+FLIC_Model_Coef$Coef <- rownames(FLIC_Model_Coef)
+FLIC_Model_Coef$Model <- rep("FLIC",nrow(FLIC_Model_Coef))
+colnames(FLIC_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(FLIC_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(FLIC_Model_Probabilities <- predict(FLIC_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(FLIC_Model_Indices <- predict(FLIC_Model, 
+                           type = c("link")))
+max(FLIC_Model_Indices)
+min(FLIC_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+FLIC_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_FLIC)
+FLIC_Model_Predictions$FLIC_Prob <- FLIC_Model_Probabilities
+FLIC_Model_Predictions$FLIC_LP <- FLIC_Model_Indices
+FLIC_Model_Predictions$UTI <- as.factor(FLIC_Model_Predictions$UTI)
+FLIC_Model_Predictions$Label <- rep("FLIC",nrow(FLIC_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+FLIC_Model_Predictions %>%
+  ggplot(aes(x = FLIC_LP ,
+             y = FLIC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Firth's Logistic Regression With Intercept Correction") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+FLIC_Prob_Low  <- FLIC_Model_Predictions[FLIC_Model_Predictions$UTI==0,
+                                    c("FLIC_Prob")]
+FLIC_Prob_High <- FLIC_Model_Predictions[FLIC_Model_Predictions$UTI==1,
+                                    c("FLIC_Prob")]
+FLIC_Model_Prob_ROC <- roc.curve(scores.class1 = FLIC_Prob_Low,
+                               scores.class0 = FLIC_Prob_High,
+                                curve = TRUE)
+
+plot(FLIC_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Firth's Logistic Regression With Intercept Correction", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+###  1.5.5 Bayesian Generalized Linear Model With Cauchy Priors (BGLM_CP)
+|
+| [Bayesian Generalized Linear Model With Cauchy Priors](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) implements a Bayesian function for generalized linear modelling with independent Cauchy prior distributions inflated by a factor of 2.5 for each coefficient. An approximate expectation-maximization algorithm is applied to update the coefficients at each step using an augmented regression to represent the prior information. 
+|
+| **[A]** The Bayesian generalized linear model with Cauchy priors model from the <mark style="background-color: #CCECFF">**arm**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model does not contain any hyperparameter.
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -3.051 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -0.489
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -1.935
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = -1.510 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -1.306
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = +1.540
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +12.604
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a valid logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration is fixed due to the absence of a hyperparameter.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99996
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.5, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_BGLM_CP <- UTI
+
+##################################
+# Formulating the structure of the
+# Bayesian Generalized Linear Model With Cauchy Priors model
+##################################
+BGLM_CP_Model <- bayesglm(UTI ~ Age_24 + Contraceptive + Condom + LubricatedCondom + Spermicide + Diaphragm,
+                       data = PMA_PreModelling_Train_BGLM_CP,
+                       family=binomial(link="logit"))
+
+##################################
+# Consolidating the model results
+##################################
+summary(BGLM_CP_Model)
+
+BGLM_CP_Model_Coef <- (as.data.frame(BGLM_CP_Model$coefficients))
+BGLM_CP_Model_Coef$Coef <- rownames(BGLM_CP_Model_Coef)
+BGLM_CP_Model_Coef$Model <- rep("BGLM_CP",nrow(BGLM_CP_Model_Coef))
+colnames(BGLM_CP_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(BGLM_CP_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(BGLM_CP_Model_Probabilities <- predict(BGLM_CP_Model, 
+                              type = c("response")))
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(BGLM_CP_Model_Indices <- predict(BGLM_CP_Model, 
+                           type = c("link")))
+max(BGLM_CP_Model_Indices)
+min(BGLM_CP_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+BGLM_CP_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_BGLM_CP)
+BGLM_CP_Model_Predictions$BGLM_CP_Prob <- BGLM_CP_Model_Probabilities
+BGLM_CP_Model_Predictions$BGLM_CP_LP <- BGLM_CP_Model_Indices
+BGLM_CP_Model_Predictions$UTI <- as.factor(BGLM_CP_Model_Predictions$UTI)
+BGLM_CP_Model_Predictions$Label <- rep("BGLM_CP",nrow(BGLM_CP_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+BGLM_CP_Model_Predictions %>%
+  ggplot(aes(x = BGLM_CP_LP ,
+             y = BGLM_CP_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-10,10), breaks=seq(-10,10,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Bayesian Generalized Linear Model With Cauchy Priors") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+BGLM_CP_Prob_Low  <- BGLM_CP_Model_Predictions[BGLM_CP_Model_Predictions$UTI==0,
+                                    c("BGLM_CP_Prob")]
+BGLM_CP_Prob_High <- BGLM_CP_Model_Predictions[BGLM_CP_Model_Predictions$UTI==1,
+                                    c("BGLM_CP_Prob")]
+BGLM_CP_Model_Prob_ROC <- roc.curve(scores.class1 = BGLM_CP_Prob_Low,
+                               scores.class0 = BGLM_CP_Prob_High,
+                                curve = TRUE)
+
+plot(BGLM_CP_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Bayesian Generalized Linear Model With Cauchy Priors", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+###  1.5.6 Penalized Logistic Regression - Ridge (PLR_R)
+|
+| [Ridge Penalized Logistic Regression](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) implements a shrinkage estimation method to deal with infinite estimates by pulling, on average, the original estimates towards zero. The algorithm penalizes the log-likelihood by subtracting a multiple of the sum of the squared coefficients while excluding the intercept from the sum, which is equivalent to penalization using normal prior densities. 
+|
+| **[A]** The penalized logistic regression - ridge model from the <mark style="background-color: #CCECFF">**glmnet**</mark> package was implemented. The <span style="color: #FF0000">UTI</span> response was regressed against the <span style="color: #FF0000">Age_24</span>, <span style="color: #FF0000">Contraceptive</span>, <span style="color: #FF0000">Condom</span>, <span style="color: #FF0000">LubricatedCondom</span>, <span style="color: #FF0000">Spermicide</span> and <span style="color: #FF0000">Diaphragm</span> predictors.
+|
+| **[B]** The model contains 1 hyperparameter:
+|      **[B.1]** <span style="color: #FF0000">lambda</span> = shrinkage parameter made to vary across a range of values equal to 0.05 to 490
+|
+| **[C]** The model was able to sufficiently compensate for the quasi-complete condition simulated for the <span style="color: #FF0000">Diaphragm</span> predictor, resulting in reasonably valid estimated coefficients and standard errors.
+|      **[C.1]** <span style="color: #FF0000">Intercept</span> coefficient = -1.719 
+|      **[C.2]** <span style="color: #FF0000">Age_24</span> coefficient = -0.363
+|      **[C.3]** <span style="color: #FF0000">Contraceptive</span> coefficient = -0.185
+|      **[C.4]** <span style="color: #FF0000">Condom</span> coefficient = +0.324 
+|      **[C.5]** <span style="color: #FF0000">LubricatedCondom</span> coefficient = -0.472
+|      **[C.6]** <span style="color: #FF0000">Spermicide</span> coefficient = -0.149
+|      **[C.7]** <span style="color: #FF0000">Diaphragm</span> coefficient = +4.129
+|
+| **[D]** The logistic curve formulated by plotting the predicted probabilities against the classification index using the logit values showed a a slightly kinked logistic profile with reasonably distributed predicted points.
+|
+| **[E]** The performance of the model is summarized as follows:
+|      **[E.1]** Final model configuration involves lambda=0.05.
+|      **[E.2]** Apparent ROC Curve AUC = 0.99912
+|      **[E.3]** Estimated probabilities were reasonably distributed across a range of values.
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.5.6, warning=FALSE, message=FALSE}
+##################################
+# Creating a local object
+# for the train set
+##################################
+PMA_PreModelling_Train_PLR_R <- UTI
+PLR_R_Response   <- PMA_PreModelling_Train_PLR_R[,c("UTI")]
+PLR_R_Predictors <- model.matrix(UTI~.,
+                                  PMA_PreModelling_Train_PLR_R)[,2:ncol(PMA_PreModelling_Train_PLR_R)]
+
+##################################
+# Conducting hyperparameter tuning
+# of the lambda parameter
+# using cross-validation
+##################################
+(PLR_R_LambdaCV <- cv.glmnet(PLR_R_Predictors,
+                            PLR_R_Response,
+                            family = "binomial",
+                            alpha = 0))
+PLR_R_LambdaCV$lambda
+plot(PLR_R_LambdaCV)
+(PLR_R_MinLambda <- PLR_R_LambdaCV$lambda.min)
+
+##################################
+# Formulating the structure of the
+# Penalized Logistic Regression - Ridge model
+##################################
+PLR_R_Model <- glmnet(PLR_R_Predictors,
+                      PLR_R_Response,
+                      alpha = 0,
+                      family = "binomial",
+                      lambda = PLR_R_MinLambda)
+
+##################################
+# Consolidating the model results
+##################################
+summary(PLR_R_Model)
+coef(PLR_R_Model)
+
+PLR_R_Model_Coef <- (as.data.frame(coef(PLR_R_Model)[1:7]))
+PLR_R_Model_Coef$Coef <- rownames(coef(PLR_R_Model))
+PLR_R_Model_Coef$Model <- rep("PLR_R",nrow(PLR_R_Model_Coef))
+colnames(PLR_R_Model_Coef) <- c("Estimates","Coefficients","Model")
+print(PLR_R_Model_Coef, rownames=FALSE)
+
+##################################
+# Computing the model predictions
+##################################
+(PLR_R_Model_Probabilities <- PLR_R_Model %>% 
+   predict(PLR_R_Predictors, type = c("response")) %>% 
+   as.vector())
+
+##################################
+# Creating a classification index
+# based from the model predictions
+##################################
+(PLR_R_Model_Indices <- PLR_R_Model %>% 
+   predict(PLR_R_Predictors, type = c("link")) %>% 
+   as.vector())
+max(PLR_R_Model_Indices)
+min(PLR_R_Model_Indices)
+
+##################################
+# Consolidating the model probabilities
+# and classification index
+# based from the model predictions
+##################################
+PLR_R_Model_Predictions <- as.data.frame(PMA_PreModelling_Train_PLR_R)
+PLR_R_Model_Predictions$PLR_R_Prob <- PLR_R_Model_Probabilities
+PLR_R_Model_Predictions$PLR_R_LP <- PLR_R_Model_Indices
+PLR_R_Model_Predictions$UTI <- as.factor(PLR_R_Model_Predictions$UTI)
+PLR_R_Model_Predictions$Label <- rep("PLR_R",nrow(PLR_R_Model_Predictions))
+
+##################################
+# Formulating the probability curve
+# using the consolidated model predictions
+##################################
+PLR_R_Model_Predictions %>%
+  ggplot(aes(x = PLR_R_LP ,
+             y = PLR_R_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-3,3), breaks=seq(-3,3,by=1)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  ggtitle("Estimated UTI Probabilities Based on Classification Index : Penalized Logistic Regression - Ridge") +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="top")
+
+##################################
+# Formulating the corresponding
+# receiver operating characteristic (ROC) curve
+# using the model predictions
+##################################
+PLR_R_Prob_Low  <- PLR_R_Model_Predictions[PLR_R_Model_Predictions$UTI==0,
+                                    c("PLR_R_Prob")]
+PLR_R_Prob_High <- PLR_R_Model_Predictions[PLR_R_Model_Predictions$UTI==1,
+                                    c("PLR_R_Prob")]
+PLR_R_Model_Prob_ROC <- roc.curve(scores.class1 = PLR_R_Prob_Low,
+                               scores.class0 = PLR_R_Prob_High,
+                                curve = TRUE)
+
+plot(PLR_R_Model_Prob_ROC,
+     xlab="1-Specificity", 
+     ylab="Sensitivity",
+     main="ROC Curve of the UTI Probabilities : Penalized Logistic Regression - Ridge", 
+     color=TRUE, 
+     lwd=8,
+     legend=3)
+
+```
+
+</details>
+
+##  1.6 Consolidated Findings
+|
+| **[A]** The robust logistic regression models which were able to sufficiently compensate for the quasi-complete condition through stable coefficient estimates and standard errors, including valid logistic profiles with reasonably distributed predicted points are the following :
+|      **[A.1]** **FBRLR : Firth’s Bias-Reduced Logistic Regression** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.2]** **FLAC : Firth’s Logistic Regression With Added Covariate** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.3]** **FLIC : Firth’s Logistic Regression With Intercept Correction** (<mark style="background-color: #CCECFF">**logistf**</mark> package)
+|      **[A.4]** **BGLM_CP : Bayesian Generalized Linear Model With Cauchy Priors** (<mark style="background-color: #CCECFF">**arm**</mark> package)
+|
+|
+
+<details><summary><mark style="background-color: #000000;color: #FFFFFF">**Code Chunk | Output**</mark></summary>
+
+```{r section_1.6, warning=FALSE, message=FALSE}
+##################################
+# Replotting the logistic curves
+##################################
+LR_LogisticCurvePlot <- LR_Model_Predictions %>%
+  ggplot(aes(x = LR_LP ,
+             y = LR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FBRLR_LogisticCurvePlot <- FBRLR_Model_Predictions %>%
+  ggplot(aes(x = FBRLR_LP ,
+             y = FBRLR_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FLAC_LogisticCurvePlot <- FLAC_Model_Predictions %>%
+  ggplot(aes(x = FLAC_LP ,
+             y = FLAC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+FLIC_LogisticCurvePlot <- FLIC_Model_Predictions %>%
+  ggplot(aes(x = FLIC_LP ,
+             y = FLIC_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+BGLM_CP_LogisticCurvePlot <- BGLM_CP_Model_Predictions %>%
+  ggplot(aes(x = BGLM_CP_LP ,
+             y = BGLM_CP_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+PLR_R_LogisticCurvePlot <- PLR_R_Model_Predictions %>%
+  ggplot(aes(x = PLR_R_LP ,
+             y = PLR_R_Prob,
+             color = UTI)) +
+  scale_colour_manual(values=c("#1846BA55","#B8000055")) +
+  geom_point(size=5) +
+  geom_line(color="black") +
+  xlab("UTI Classification Index (Logit Values)") +
+  ylab("Estimated UTI Probability") +
+  labs(color = "UTI") +
+  scale_x_continuous( limits=c(-50,50), breaks=seq(-50,50,by=5)) +
+  scale_y_continuous( limits=c(0,1), breaks=seq(0,1,by=0.1),labels = scales::percent) +
+  facet_grid(. ~ Label) +
+  theme_bw() +
+  theme(plot.title = element_text(color="black", size=14, face="bold", hjust=0.50),
+        axis.title.x = element_text(color="black", size=12, face="bold"),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        legend.position="none")
+
+RLR_LogisticCurvePlot <- ggarrange(LR_LogisticCurvePlot,
+                                   FBRLR_LogisticCurvePlot,
+                                   FLAC_LogisticCurvePlot,
+                                   FLIC_LogisticCurvePlot,
+                                   BGLM_CP_LogisticCurvePlot,
+                                   PLR_R_LogisticCurvePlot,
+                                   ncol=2, nrow=3)
+
+annotate_figure(RLR_LogisticCurvePlot,
+                top = text_grob("Estimated UTI Probabilities Based on Classification Index", 
+                                color = "black", 
+                                face = "bold", 
+                                size = 14))
+
+##################################
+# Formulating the logistic regression model 
+# coefficient comparison plot
+##################################
+RLRCoefficient_Summary <- rbind(LR_Model_Coef,
+                                FBRLR_Model_Coef,
+                                FLAC_Model_Coef,
+                                FLIC_Model_Coef,
+                                BGLM_CP_Model_Coef,
+                                PLR_R_Model_Coef)
+
+RLRCoefficient_Summary <- as.data.frame(RLRCoefficient_Summary)
+
+RLRCoefficient_Summary$Estimates <- as.numeric(as.character(RLRCoefficient_Summary$Estimates))
+RLRCoefficient_Summary$Coefficients <- factor(RLRCoefficient_Summary$Coefficients,
+                                        levels = c("Diaphragm",
+                                                   "Spermicide",
+                                                   "LubricatedCondom",
+                                                   "Condom",
+                                                   "Contraceptive",
+                                                   "Age_24",
+                                                   "(Intercept)"))
+RLRCoefficient_Summary$Model <- factor(RLRCoefficient_Summary$Model,
+                                        levels = c("PLR_R",
+                                                   "BGLM_CP",
+                                                   "FLIC",
+                                                   "FLAC",
+                                                   "FBRLR",
+                                                   "LR"))
+
+print(RLRCoefficient_Summary, row.names=FALSE)
+
+(ROCCurveAUC_Plot <- dotplot(Model ~ Estimates | Coefficients,
+                           data = RLRCoefficient_Summary,
+                           main = "Model Coefficient Estimation Comparison",
+                           ylab = "Model",
+                           xlab = "Coefficient Estimates",
+                           auto.key = list(adj = 1),
+                           type=c("p", "h"),       
+                           origin = 0,
+                           alpha = 0.45,
+                           pch = 16,
+                           cex = 2,
+                           layout = c(3,3)))
+
+```
+
+</details>
+|
+# **2. Summary** <a name="summary"></a>
+|
+| ![](D:/Github_Codes/ProjectPortfolio/Portfolio_Project_28/docs/Project28_Summary.png)
+|
+# **3. References**
+|
+| **[Book]** [Applied Predictive Modeling](http://appliedpredictivemodeling.com/) by Max Kuhn and Kjell Johnson
+| **[Book]** [An Introduction to Statistical Learning](https://www.statlearning.com/) by Gareth James, Daniela Witten, Trevor Hastie and Rob Tibshirani
+| **[Book]** [Multivariate Data Visualization with R](http://lmdvr.r-forge.r-project.org/figures/figures.html) by Deepayan Sarkar
+| **[Book]** [Machine Learning](https://bookdown.org/ssjackson300/Machine-Learning-Lecture-Notes/) by Samuel Jackson
+| **[Book]** [Data Modeling Methods](https://bookdown.org/larget_jacob/data-modeling-methods/) by Jacob Larget
+| **[Book]** [Introduction to R and Statistics](https://saestatsteaching.tech/) by University of Western Australia
+| **[Book]** [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/index.html) by Max Kuhn and Kjell Johnson
+| **[Book]** [Introduction to Regression Methods for Public Health Using R](https://www.bookdown.org/rwnahhas/RMPH/) by Ramzi Nahhas
+| **[Book]** [Introduction to Research Methods](https://bookdown.org/ejvanholm/Textbook/) by Eric van Holm
+| **[R Package]** [AppliedPredictiveModeling](https://cran.r-project.org/web//packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf) by Max Kuhn
+| **[R Package]** [caret](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[R Package]** [rpart](https://mran.microsoft.com/web/packages/rpart/rpart.pdf) by Terry Therneau and Beth Atkinson
+| **[R Package]** [lattice](https://cran.r-project.org/web/packages/lattice/lattice.pdf) by  Deepayan Sarkar
+| **[R Package]** [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html/) by Hadley Wickham
+| **[R Package]** [moments](https://cran.r-project.org/web/packages/moments/index.html) by Lukasz Komsta and Frederick
+| **[R Package]** [skimr](https://cran.r-project.org/web/packages/skimr/skimr.pdf) by  Elin Waring
+| **[R Package]** [RANN](https://cran.r-project.org/web/packages/RANN/RANN.pdf) by  Sunil Arya, David Mount, Samuel Kemp and Gregory Jefferis
+| **[R Package]** [corrplot](https://cran.r-project.org/web/packages/corrplot/corrplot.pdf) by Taiyun Wei
+| **[R Package]** [tidyverse](https://cran.r-project.org/web/packages/tidyverse/tidyverse.pdf) by Hadley Wickham
+| **[R Package]** [lares](https://cran.rstudio.com/web/packages/lares/lares.pdf) by Bernardo Lares
+| **[R Package]** [DMwR](https://mran.microsoft.com/snapshot/2016-05-02/web/packages/DMwR/DMwR.pdf) by Luis Torgo
+| **[R Package]** [gridExtra](https://cran.r-project.org/web/packages/gridExtra/gridExtra.pdf) by Baptiste Auguie and Anton Antonov
+| **[R Package]** [rattle](https://cran.r-project.org/web/packages/rattle/rattle.pdf) by Graham Williams
+| **[R Package]** [rpart.plot](https://cran.r-project.org/web/packages/rpart.plot/rpart.plot.pdf) by Stephen Milborrow
+| **[R Package]** [RColorBrewer](https://cran.r-project.org/web//packages/RColorBrewer/RColorBrewer.pdf) by Erich Neuwirth
+| **[R Package]** [stats](https://search.r-project.org/R/refmans/stats/html/00Index.html) by R Core Team
+| **[R Package]** [pls](https://cran.r-project.org/web/packages/pls/pls.pdf) by Kristian Hovde Liland
+| **[R Package]** [nnet](https://cran.r-project.org/web/packages/nnet/nnet.pdf) by Brian Ripley
+| **[R Package]** [elasticnet](https://cran.r-project.org/web/packages/elasticnet/elasticnet.pdf) by Hui Zou
+| **[R Package]** [earth](https://cran.r-project.org/web/packages/earth/earth.pdf) by Stephen Milborrow
+| **[R Package]** [party](https://cran.r-project.org/web/packages/party/party.pdf) by Torsten Hothorn
+| **[R Package]** [kernlab](https://cran.r-project.org/web/packages/kernlab/kernlab.pdf) by Alexandros Karatzoglou
+| **[R Package]** [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf) by Andy Liaw
+| **[R Package]** [pROC](https://cran.r-project.org/web/packages/pROC/pROC.pdf) by Xavier Robin
+| **[R Package]** [mda](https://cran.r-project.org/web/packages/mda/mda.pdf) by Trevor Hastie
+| **[R Package]** [klaR](https://cran.r-project.org/web/packages/klaR/klaR.pdf) by Christian Roever, Nils Raabe, Karsten Luebke, Uwe Ligges, Gero Szepannek, Marc Zentgraf and David Meyer
+| **[R Package]** [pamr](https://cran.r-project.org/web/packages/pamr/pamr.pdf) by Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan and Gil Chu
+| **[R Package]** [OptimalCutpoints](https://cran.r-project.org/web/packages/OptimalCutpoints/OptimalCutpoints.pdf) by Monica Lopez-Raton and Maria Xose Rodriguez-Alvarez
+| **[R Package]** [broom](https://cran.r-project.org/web/packages/broom/broom.pdf) by Simon Couch
+| **[R Package]** [PRROC](https://cran.r-project.org/web/packages/PRROC/PRROC.pdf) by Jan Grau and Jens Keilwagen
+| **[R Package]** [ggpubr](https://cran.microsoft.com/snapshot/2022-04-13/web/packages/ggpubr/ggpubr.pdf) by Alboukadel Kassambara
+| **[R Package]** [Hmisc](https://cran.r-project.org/web/packages/Hmisc/Hmisc.pdf) by Frank Harrell
+| **[R Package]** [logistf](https://cran.r-project.org/web/packages/logistf/logistf.pdf) by Georg Heinze
+| **[R Package]** [arm](https://cran.r-project.org/web/packages/arm/arm.pdf) by Yu-Sung Su
+| **[R Package]** [glmnet](https://cran.r-project.org/web/packages/glmnet/glmnet.pdf) by Trevor Hastie
+| **[Article]** [The caret Package](https://topepo.github.io/caret/index.html) by Max Kuhn
+| **[Article]** [A Short Introduction to the caret Package](https://cran.r-project.org/web/packages/caret/vignettes/caret.html) by Max Kuhn
+| **[Article]** [Caret Package – A Practical Guide to Machine Learning in R](https://www.machinelearningplus.com/machine-learning/caret-package/#:~:text=Caret%20is%20short%20for%20Classification%20And%20REgression%20Training.,track%20of%20which%20algorithm%20resides%20in%20which%20package.) by Selva Prabhakaran
+| **[Article]** [Tuning Machine Learning Models Using the Caret R Package](https://machinelearningmastery.com/tuning-machine-learning-models-using-the-caret-r-package/) by Jason Brownlee
+| **[Article]** [Lattice Graphs](http://www.sthda.com/english/wiki/lattice-graphs) by Alboukadel Kassambara
+
+| **[Article]** [What is Complete or Quasi-Complete Separation in Logistic/Probit Regression and How Do We Deal with Them](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faqwhat-is-complete-or-quasi-complete-separation-in-logisticprobit-regression-and-how-do-we-deal-with-them/) by UCLA Advanced Research Computing Group
+| **[Article]** [What Is Complete Separation in Binary Logistic Regression?](https://blog.minitab.com/en/starting-out-with-statistical-software/what-is-complete-separation-in-binary-logistic-regression) by Eric Heckman
+| **[Article]** [Separation and Convergence Issues in Logistic Regression](https://cscu.cornell.edu/wp-content/uploads/82_lgsbias.pdf) by Cornell Statistical Consulting Unit
+| **[Article]** [Firth Logistic Regression](https://www.r-bloggers.com/2010/11/example-8-15-firth-logistic-regression/) by Ken Kleinman
+| **[Article]** [Penalized Logistic Regression Essentials in R: Ridge, Lasso and Elastic Net](http://sthda.com/english/articles/36-classification-methods-essentials/149-penalized-logistic-regression-essentials-in-r-ridge-lasso-and-elastic-net/) by Alboukadel Kassambara
+| **[Article]** [Correcting the Quasi-complete Separation Issue in Logistic Regression Models](https://support.sas.com/resources/papers/proceedings16/10220-2016.pdf) by Xinghe Lu
+| **[Article]** [An Introduction to glmnet](https://glmnet.stanford.edu/articles/glmnet.html) by Trevor Hastie, Junyang Qian and Kenneth Tay
+| **[Article]** [Choosing Hyperparameters in Penalized Regression](https://privefl.github.io/blog/choosing-hyper-parameters-in-penalized-regression/) by Florian Prive 
+| **[Publication]** [The Origins of Logistic Regression](http://dx.doi.org/10.2139/ssrn.360300) by JS Cramer (Econometrics eJournal)
+| **[Publication]** [Separation in Logistic Regression: Causes, Consequences, and Control](https://academic.oup.com/aje/article/187/4/864/4084405?login=false) by Mohammad Ali Mansournia, Angelika Geroldinger, Sander Greenland and Georg Heinze (American Journal of Epidemiology)
+| **[Publication]** [Dealing with Separation in Logistic Regression Models](https://www.cambridge.org/core/journals/political-analysis/article/abs/dealing-with-separation-in-logistic-regression-models/E2F30195EFFD5F79A9B27ACA5107922F) by Carlisle Rainey (Political Analysis)
+| **[Publication]** [Bias Reduction of Maximum Likelihood Estimates](https://academic.oup.com/biomet/article-abstract/80/1/27/228364?login=false) by David Firth (Biometrika)
+| **[Publication]** [A Solution to the Problem of Separation in Logistic Regression](https://onlinelibrary.wiley.com/doi/10.1002/sim.1047) by Georg Heinze and Michael Schemper (Statistics in Medicine)
+| **[Publication]** [A Comparative Investigation of Methods for Logistic Regression with Separated or Nearly Separated Data](https://onlinelibrary.wiley.com/doi/10.1002/sim.2687) by Georg Heinze (Statistics in Medicine)
+| **[Publication]** [Confidence Intervals After Multiple Imputation: Combining Profile Likelihood Information from Logistic Regressions](https://onlinelibrary.wiley.com/doi/10.1002/sim.5899) by Georg Heinze, Meinhard Ploner and Jan Beyea (Statistics in Medicine)
+| **[Publication]** [Firth’s Logistic Regression with Rare Events: Accurate Effect Estimates and Predictions?](https://onlinelibrary.wiley.com/doi/10.1002/sim.7273) by Rainer Puhr, Georg Heinze, Mariana Nold, Lara Lusa and Angelika Geroldinger (Statistics in Medicine)
+| **[Publication]** [A Method for Computing Profile-Likelihood Based Confidence Intervals](https://rss.onlinelibrary.wiley.com/doi/abs/10.2307/2347496) by DJ Venzon and SH Moolgavkar (Applied Statistics)
+| **[Publication]** [A Weakly Informative Default Prior Distribution For Logistic And Other Regression Models](http://www.stat.columbia.edu/~gelman/research/published/priors11.pdf) by Andrew Gelman, Aleks Jakulin, Maria Grazia Pittau and Yu-Sung Su (The Annals of Applied Statistics)
+| **[Publication]** [Ridge Regression: Biased Estimation for Non-Orthogonal Problems](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) by Art Hoerl and Robert Kennard (Technometrics)
+| **[Course]** [Applied Data Mining and Statistical Learning](https://online.stat.psu.edu/stat508/) by Penn State Eberly College of Science
+|
+|
+|
+|
