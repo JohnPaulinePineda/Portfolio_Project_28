@@ -1,6 +1,6 @@
 ---
 title: "Supervised Learning : Exploring Robust Logistic Regression Models for Handling Quasi-Complete Separation"
-author: "John Pauline Pineda"
+author: "<b><a href='https://github.com/JohnPaulinePineda'>John Pauline Pineda</a></b>"
 date: "February 19, 2023"
 output: 
   html_document:
@@ -56,7 +56,7 @@ library(pls)
 library(corrplot)
 library(tidyverse)
 library(lares)
-library(DMwR)
+library(DMwR2)
 library(gridExtra)
 library(rattle)
 library(rpart.plot)
@@ -452,7 +452,7 @@ EDA.Bar.Source.FactorVar.Prop <- rbind(EDA.PropTable.Function("Age_24"),
                                       stack=TRUE,
                                       ylab = "Proportion",
                                       xlab = "UTI",
-                                      auto.key = list(adj = 1),
+                                      auto.key = list(adj=1, space="top", columns=2),
                                       layout=(c(3,2))))
 
 ```
@@ -1435,7 +1435,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
                            main = "Model Coefficient Estimation Comparison",
                            ylab = "Model",
                            xlab = "Coefficient Estimates",
-                           auto.key = list(adj = 1),
+                           auto.key = list(adj=1),
                            type=c("p", "h"),       
                            origin = 0,
                            alpha = 0.45,
@@ -1449,7 +1449,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 |
 # **2. Summary** <a name="summary"></a>
 |
-| ![](D:/Github_Codes/ProjectPortfolio/Portfolio_Project_28/docs/Project28_Summary.png)
+| ![](D:/Github_Codes/ProjectPortfolio/Portfolio_Project_28/images/Project28_Summary.png)
 |
 # **3. References**
 |
@@ -1473,7 +1473,7 @@ print(RLRCoefficient_Summary, row.names=FALSE)
 | **[R Package]** [corrplot](https://cran.r-project.org/web/packages/corrplot/corrplot.pdf) by Taiyun Wei
 | **[R Package]** [tidyverse](https://cran.r-project.org/web/packages/tidyverse/tidyverse.pdf) by Hadley Wickham
 | **[R Package]** [lares](https://cran.rstudio.com/web/packages/lares/lares.pdf) by Bernardo Lares
-| **[R Package]** [DMwR](https://mran.microsoft.com/snapshot/2016-05-02/web/packages/DMwR/DMwR.pdf) by Luis Torgo
+| **[R Package]** [DMwR2](https://mran.microsoft.com/snapshot/2016-05-02/web/packages/DMwR/DMwR.pdf) by Luis Torgo
 | **[R Package]** [gridExtra](https://cran.r-project.org/web/packages/gridExtra/gridExtra.pdf) by Baptiste Auguie and Anton Antonov
 | **[R Package]** [rattle](https://cran.r-project.org/web/packages/rattle/rattle.pdf) by Graham Williams
 | **[R Package]** [rpart.plot](https://cran.r-project.org/web/packages/rpart.plot/rpart.plot.pdf) by Stephen Milborrow
